@@ -115,7 +115,7 @@
         // Portrait
         if ([NCBrandOptions sharedInstance].disable_linkLoginProvider == NO)
             self.bottomLabel.hidden = NO;
-        self.loginTypeView.hidden = NO;
+        self.loginTypeView.hidden = YES;
         
     } else {
         
@@ -135,19 +135,19 @@
 
     if (_loginType == loginAdd) {
         // Login Flow ?
-        _imageUser.hidden = YES;
-        _user.hidden = YES;
-        _imagePassword.hidden = YES;
-        _password.hidden = YES;
+        _imageUser.hidden = NO;
+        _user.hidden = NO;
+        _imagePassword.hidden = NO;
+        _password.hidden = NO;
     }
     
     if (_loginType == loginAddForced) {
-        _annulla.hidden = YES;
+        _annulla.hidden = NO;
         // Login Flow ?
-        _imageUser.hidden = YES;
-        _user.hidden = YES;
-        _imagePassword.hidden = YES;
-        _password.hidden = YES;
+        _imageUser.hidden = NO;
+        _user.hidden = NO;
+        _imagePassword.hidden = NO;
+        _password.hidden = NO;
     }
     
     if (_loginType == loginModifyPasswordUser) {
@@ -533,10 +533,10 @@
         
     } else {
         
-        _imageUser.hidden = YES;
-        _user.hidden = YES;
-        _imagePassword.hidden = YES;
-        _password.hidden = YES;
+        _imageUser.hidden = NO;
+        _user.hidden = NO;
+        _imagePassword.hidden = NO;
+        _password.hidden = NO;
         
         [self.loginTypeView setTitle:NSLocalizedString(@"_traditional_login_", nil) forState:UIControlStateNormal];
     }

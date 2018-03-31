@@ -224,7 +224,7 @@
 "_serverstatus_error_"          = "Connection to server failure, verify your server address or network status";
 "_add_your_nextcloud_"          = "Add your Nextcloud account";
 "_login_url_"                   = "Server address https://…";
-"_login_bottom_label_"          = "Don't have a server yet?\nChoose one of the providers.";
+"_login_bottom_label_"          = "注册账号";
 "_error_multidomain_"           = "Address not allowed, only the following domains are valid:";
 "_account_already_exists_"      = "The account %@ already exists";
 "_traditional_login_"           = "Revert to old login method";

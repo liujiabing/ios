@@ -31,7 +31,7 @@ class NCBrandColor: NSObject {
     }()
 
     // Color
-    @objc public let customer:              UIColor = UIColor(red: 0.0/255.0, green: 130.0/255.0, blue: 201.0/255.0, alpha: 1.0)    // BLU NC : #0082c9
+    @objc public let customer:              UIColor = UIColor(red: 116.0/255.0, green: 91.0/255.0, blue: 202.0/255.0, alpha: 1.0)    // BLU NC : #745bca
     @objc public var customerText:          UIColor = .white
     
     @objc public var brand:                 UIColor                                                                                 // don't touch me
@@ -66,13 +66,13 @@ class NCBrandColor: NSObject {
         return instance
     }()
     
-    @objc public let brand:                           String = "Nextcloud"
-    @objc public let mailMe:                          String = "ios@nextcloud.com"
-    @objc public let textCopyrightNextcloudiOS:       String = "Nextcloud for iOS %@ © 2018 T.W.S. Inc."
-    @objc public let textCopyrightNextcloudServer:    String = "Nextcloud Server %@"
-    @objc public let loginBaseUrl:                    String = "https://cloud.twsweb.it"
+    @objc public let brand:                           String = "Asycloud"
+    @objc public let mailMe:                          String = "admin@asytech.cn"
+    @objc public let textCopyrightNextcloudiOS:       String = "Asycloud for iOS %@ © 2018 Asy Co.,Ltd."
+    @objc public let textCopyrightNextcloudServer:    String = "Asycloud Server %@"
+    @objc public let loginBaseUrl:                    String = "https://asytech.cn/cloud"
     @objc public let pushNotificationServer:          String = "https://push-notifications.nextcloud.com"
-    @objc public let linkLoginProvider:               String = "https://nextcloud.com/providers"
+    @objc public let linkLoginProvider:               String = "https://asytech.cn/cloud/index.php/apps/registration/"
     @objc public let textLoginProvider:               String = "_login_bottom_label_"
     @objc public let middlewarePingUrl:               String = ""
     @objc public let webLoginAutenticationProtocol:   String = "nc://"                                          // example "abc://"
