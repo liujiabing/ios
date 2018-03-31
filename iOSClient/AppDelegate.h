@@ -40,7 +40,6 @@
 #import "CCFavorites.h"
 
 @class CCLoginWeb;
-@class NCEntoToEndInterface;
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate, BKPasscodeLockScreenManagerDelegate, BKPasscodeViewControllerDelegate, TWMessageBarStyleSheet, CCNetworkingDelegate>
 
@@ -119,7 +118,6 @@
 @property (nonatomic, retain) CCTransfers *activeTransfers;
 @property (nonatomic, retain) CCLogin *activeLogin;
 @property (nonatomic, retain) CCLoginWeb *activeLoginWeb;
-@property (nonatomic, strong) NCEntoToEndInterface *endToEndInterface;
 
 @property (nonatomic, strong) NSMutableDictionary *listMainVC;
 @property (nonatomic, strong) NSMutableDictionary *listProgressMetadata;
@@ -132,9 +130,6 @@
 
 // Setting Active Account
 - (void)settingActiveAccount:(NSString *)activeAccount activeUrl:(NSString *)activeUrl activeUser:(NSString *)activeUser activeUserID:(NSString *)activeUserID activePassword:(NSString *)activePassword;
-
-// initializations 
-- (void)applicationInitialized;
 
 // Quick Actions - ShotcutItem
 - (void)configDynamicShortcutItems;

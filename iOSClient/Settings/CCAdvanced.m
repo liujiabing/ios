@@ -309,7 +309,7 @@
         
     } else {
         
-        [appDelegate messageNotification:@"_error_" description:@"Impossible create file body" visible:YES delay:k_dismissAfterSecond type:TWMessageBarMessageTypeError errorCode:0];
+        [appDelegate messageNotification:@"_error_" description:@"Impossible create file body" visible:YES delay:k_dismissAfterSecond type:TWMessageBarMessageTypeError errorCode:k_CCErrorInternalError];
     }
 }
 
@@ -340,10 +340,9 @@
     [[NCManageDatabase sharedInstance] clearTable:[tableQueueUpload class] account:appDelegate.activeAccount];
     
     [appDelegate.netQueue cancelAllOperations];
-    
     [[CCNetworking sharedNetworking] settingSessionsDownload:YES upload:YES taskStatus:k_taskStatusCancel activeAccount:appDelegate.activeAccount activeUser:appDelegate.activeUser activeUrl:appDelegate.activeUrl];
     
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC),dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC),dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         
         [[NSURLCache sharedURLCache] setMemoryCapacity:0];
         [[NSURLCache sharedURLCache] setDiskCapacity:0];
@@ -363,7 +362,7 @@
         
         [self emptyUserDirectoryUser:appDelegate.activeUser url:appDelegate.activeUrl removeIco:removeIco];
         
-        [self emptyLocalDirectory];
+        [self emptyDocumentsDirectory];
         
         NSArray* tmpDirectory = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:NSTemporaryDirectory() error:NULL];
         for (NSString *file in tmpDirectory)
@@ -464,7 +463,7 @@
         
         [self.hud visibleIndeterminateHud];
         
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.01 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void) {
             
             [appDelegate.netQueue cancelAllOperations];
             [[CCNetworking sharedNetworking] settingSessionsDownload:YES upload:YES taskStatus:k_taskStatusCancel activeAccount:appDelegate.activeAccount activeUser:appDelegate.activeUser activeUrl:appDelegate.activeUrl];
@@ -538,20 +537,6 @@
         [[NSFileManager defaultManager] removeItemAtPath:[NSString stringWithFormat:@"%@/%@", dirIniziale, file] error:nil];
 }
 
-- (void)emptyDocumentsDirectory
-{
-    NSString *file;
-    NSString *dirIniziale;
-    
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    dirIniziale = [paths objectAtIndex:0];
-    
-    NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtPath:dirIniziale];
-    
-    while (file = [enumerator nextObject])
-        [[NSFileManager defaultManager] removeItemAtPath:[NSString stringWithFormat:@"%@/%@", dirIniziale, file] error:nil];
-}
-
 - (void)emptyUserDirectoryUser:(NSString *)user url:(NSString *)url removeIco:(BOOL)removeIco
 {
     NSString *file;
@@ -573,12 +558,12 @@
     }
 }
 
-- (void)emptyLocalDirectory
+- (void)emptyDocumentsDirectory
 {
     NSString *file;
     NSString *dirIniziale;
     
-    dirIniziale = [CCUtility getDirectoryLocal];
+    dirIniziale = [CCUtility getDirectoryDocuments];
     
     NSDirectoryEnumerator *enumerator = [[NSFileManager defaultManager] enumeratorAtPath:dirIniziale];
     

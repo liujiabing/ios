@@ -346,7 +346,15 @@
 
 + (BOOL)getDirectoryOnTop
 {
-    return [[UICKeyChainStore stringForKey:@"directoryOnTop" service:k_serviceShareKeyChain] boolValue];
+    NSString *valueString = [UICKeyChainStore stringForKey:@"directoryOnTop" service:k_serviceShareKeyChain];
+    
+    // Default TRUE
+    if (valueString == nil) {
+        [self setDirectoryOnTop:YES];
+        return true;
+    }
+    
+    return [valueString boolValue];
 }
 
 + (void)setDirectoryOnTop:(BOOL)directoryOnTop
@@ -416,7 +424,15 @@
 
 + (BOOL)getFormatCompatibility
 {
-    return [[UICKeyChainStore stringForKey:@"formatCompatibility" service:k_serviceShareKeyChain] boolValue];
+    NSString *valueString = [UICKeyChainStore stringForKey:@"formatCompatibility" service:k_serviceShareKeyChain];
+    
+    // Default TRUE
+    if (valueString == nil) {
+        [self setFormatCompatibility:YES];
+        return true;
+    }
+    
+    return [valueString boolValue];
 }
 
 + (void)setFormatCompatibility:(BOOL)set
@@ -475,12 +491,14 @@
 
 + (BOOL)isEndToEndEnabled:(NSString *)account
 {
+    tableCapabilities *capabilities = [[NCManageDatabase sharedInstance] getCapabilites];
+
     NSString *publicKey = [self getEndToEndPublicKey:account];
     NSString *privateKey = [self getEndToEndPrivateKey:account];
     NSString *passphrase = [self getEndToEndPassphrase:account];
-    NSString *publicKeyServer = [self getEndToEndPublicKeyServer:account];
+    NSString *publicKeyServer = [self getEndToEndPublicKeyServer:account];    
     
-    if (passphrase.length > 0 && privateKey.length > 0 && publicKey.length > 0 && publicKeyServer.length > 0) {
+    if (passphrase.length > 0 && privateKey.length > 0 && publicKey.length > 0 && publicKeyServer.length > 0 && capabilities.endToEndEncryption) {
         
         return YES;
         
@@ -497,11 +515,6 @@
     [self setEndToEndPassphrase:account passphrase:nil];
     [self setEndToEndPublicKeyServer:account publicKey:nil];
 }
-
-#pragma ------------------------------ GET
-
-
-
 
 #pragma --------------------------------------------------------------------------------------------
 #pragma mark ===== Varius =====
@@ -560,14 +573,8 @@
 
 + (NSString *)transformedSize:(double)value
 {
-    int multiplyFactor = 0;
-    
-    NSArray *tokens = [NSArray arrayWithObjects:@"bytes",@"KB",@"MB",@"GB",@"TB",@"PB",@"EB",@"ZB",@"YB",nil];
-    while (value > 1024) {
-        value /= 1024;
-        multiplyFactor++;
-    }
-    return [NSString stringWithFormat:@"%4.2f %@",value, [tokens objectAtIndex:multiplyFactor]];
+    NSString *string = [NSByteCountFormatter stringFromByteCount:value countStyle:NSByteCountFormatterCountStyleBinary];
+    return string;
 }
 
 // Remove do not forbidden characters for Nextcloud Server
@@ -771,8 +778,8 @@
     return dirUserBaseUrl;
 }
 
-// Return the path of directory Local -> NSDocumentDirectory
-+ (NSString *)getDirectoryLocal
+// Return the path of directory Documents -> NSDocumentDirectory
++ (NSString *)getDirectoryDocuments
 {
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     
@@ -910,13 +917,20 @@
 
 + (BOOL)isFolderEncrypted:(NSString *)serverUrl account:(NSString *)account
 {
-    NSArray *metadatas = [[NCManageDatabase sharedInstance] getMetadatasWithPredicate:[NSPredicate predicateWithFormat:@"account = %@ AND directory = 1 AND e2eEncrypted = 1", account] sorted:@"directoryID" ascending:false];
+    BOOL depth = NO;
     
-    for (tableMetadata *metadata in metadatas) {
+    if (depth) {
         
-        NSString *serverUrlEncrypted = [NSString stringWithFormat:@"%@/%@", [[NCManageDatabase sharedInstance] getServerUrl:metadata.directoryID], metadata.fileName];
-        //if ([serverUrl containsString:serverUrlEncrypted])
-        if ([serverUrl isEqualToString:serverUrlEncrypted])
+        NSArray *directories = [[NCManageDatabase sharedInstance] getTablesDirectoryWithPredicate:[NSPredicate predicateWithFormat:@"account = %@ AND e2eEncrypted = 1 AND serverUrl BEGINSWITH %@", account, serverUrl] sorted:@"serverUrl" ascending:false];
+        for (tableDirectory *directory in directories) {
+            if ([serverUrl containsString:directory.serverUrl])
+                return true;
+        }
+        
+    } else {
+        
+        tableDirectory *directory = [[NCManageDatabase sharedInstance] getTableDirectoryWithPredicate:[NSPredicate predicateWithFormat:@"account = %@ AND e2eEncrypted = 1 AND serverUrl = %@", account, serverUrl]];
+        if (directory != nil)
             return true;
     }
     
@@ -955,7 +969,7 @@
     fileName = [CCUtility removeForbiddenCharactersServer:fileName];
     fileNameView = fileName;
     
-    // E2E find the fileName for fileNameView
+    // E2EE find the fileName for fileNameView
     if (isFolderEncrypted) {
         tableE2eEncryption *tableE2eEncryption = [[NCManageDatabase sharedInstance] getE2eEncryptionWithPredicate:[NSPredicate predicateWithFormat:@"account = %@ AND serverUrl = %@ AND fileNameIdentifier = %@", activeAccount, serverUrl, fileName]];
         if (tableE2eEncryption)
@@ -1003,7 +1017,7 @@
         
         // thumbnailExists
             
-        if (([ext isEqualToString:@"JPG"] || [ext isEqualToString:@"PNG"] || [ext isEqualToString:@"JPEG"] || [ext isEqualToString:@"GIF"] || [ext isEqualToString:@"BMP"] || [ext isEqualToString:@"MP3"]  || [ext isEqualToString:@"MOV"]  || [ext isEqualToString:@"MP4"]  || [ext isEqualToString:@"M4V"] || [ext isEqualToString:@"3GP"]) && metadata.e2eEncrypted == NO)
+        if ([ext isEqualToString:@"JPG"] || [ext isEqualToString:@"PNG"] || [ext isEqualToString:@"JPEG"] || [ext isEqualToString:@"GIF"] || [ext isEqualToString:@"BMP"] || [ext isEqualToString:@"MP3"]  || [ext isEqualToString:@"MOV"]  || [ext isEqualToString:@"MP4"]  || [ext isEqualToString:@"M4V"] || [ext isEqualToString:@"3GP"])
             metadata.thumbnailExists = YES;
         else
             metadata.thumbnailExists = NO;

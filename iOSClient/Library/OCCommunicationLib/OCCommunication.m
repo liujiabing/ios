@@ -624,7 +624,7 @@
 ///-----------------------------------
 /// @name search
 ///-----------------------------------
-- (void)search:(NSString *)path folder:(NSString *)folder fileName:(NSString *)fileName depth:(NSString *)depth dateLastModified:(NSString *)dateLastModified contentType:(NSString *)contentType withUserSessionToken:(NSString *)token onCommunication:(OCCommunication *)sharedOCCommunication successRequest:(void(^)(NSHTTPURLResponse *response, NSArray *items, NSString *redirectedServer, NSString *token)) successRequest failureRequest:(void(^)(NSHTTPURLResponse *response, NSError *error, NSString *token, NSString *redirectedServer)) failureRequest{
+- (void)search:(NSString *)path folder:(NSString *)folder fileName:(NSString *)fileName depth:(NSString *)depth dateLastModified:(NSString *)dateLastModified contentType:(NSArray *)contentType withUserSessionToken:(NSString *)token onCommunication:(OCCommunication *)sharedOCCommunication successRequest:(void(^)(NSHTTPURLResponse *response, NSArray *items, NSString *redirectedServer, NSString *token)) successRequest failureRequest:(void(^)(NSHTTPURLResponse *response, NSError *error, NSString *token, NSString *redirectedServer)) failureRequest{
     
     if (!token){
         token = @"no token";
@@ -639,14 +639,19 @@
         
         if (successRequest) {
             
-            NSData *responseData = (NSData*) responseObject;
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+
+                NSData *responseData = (NSData*) responseObject;
             
-            OCXMLListParser *parser = [OCXMLListParser new];
-            [parser initParserWithData:responseData];
-            NSMutableArray *searchList = [parser.searchList mutableCopy];
+                OCXMLListParser *parser = [OCXMLListParser new];
+                [parser initParserWithData:responseData];
+                NSMutableArray *searchList = [parser.searchList mutableCopy];
             
-            //Return success
-            successRequest(response, searchList, request.redirectedServer, token);
+                //Return success
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    successRequest(response, searchList, request.redirectedServer, token);
+                });
+            });
         }
         
     } failure:^(NSHTTPURLResponse *response, id responseData, NSError *error, NSString *token) {
@@ -818,16 +823,10 @@
             failure(response, nil, request.redirectedServer);
         }
         
-        
     } failure:^(NSHTTPURLResponse *response, NSData *responseData, NSError *error) {
         failure(response, error, request.redirectedServer);
     }];
-
-    
-    
-    
 }
-
 
 - (void) readSharedByServer: (NSString *) path
             onCommunication:(OCCommunication *)sharedOCCommunication
@@ -1292,15 +1291,14 @@
     [request getCapabilitiesOfServer:serverPath onCommunication:sharedOCComunication success:^(NSHTTPURLResponse *response, id responseObject) {
         
         NSData *responseData = (NSData*) responseObject;
+        OCCapabilities *capabilities = [OCCapabilities new];
         
         //Parse
         NSError *error;
         NSDictionary *jsongParsed = [NSJSONSerialization JSONObjectWithData:responseData options:NSJSONReadingMutableContainers error:&error];
         NSLog(@"dic: %@",jsongParsed);
         
-        OCCapabilities *capabilities = [OCCapabilities new];
-        
-        if (jsongParsed.allKeys > 0) {
+        if (jsongParsed && jsongParsed.allKeys > 0) {
             
             NSDictionary *ocs = [jsongParsed valueForKey:@"ocs"];
             NSDictionary *data = [ocs valueForKey:@"data"];
@@ -1386,10 +1384,29 @@
             
                 NSDictionary *externalSitesDic = [capabilitiesDict valueForKey:@"external"];
                 if (externalSitesDic) {
+                    capabilities.isExternalSitesServerEnabled = YES;
                     NSArray *externalSitesArray = [externalSitesDic valueForKey:@"v1"];
-                    if (externalSitesArray)
-                        if ([[externalSitesArray objectAtIndex:0] isEqualToString:@"sites"])
-                            capabilities.isExternalSitesServerEnabled = YES;
+                    capabilities.externalSiteV1 = [externalSitesArray componentsJoinedByString:@","];
+                }
+                
+                // NOTIFICATION
+                
+                NSDictionary *notificationDic = [capabilitiesDict valueForKey:@"notifications"];
+                if (notificationDic) {
+                    capabilities.isNotificationServerEnabled = YES;
+                    NSArray *ocsendpointsArray = [notificationDic valueForKey:@"ocs-endpoints"];
+                    capabilities.notificationOcsEndpoints = [ocsendpointsArray componentsJoinedByString:@","];
+                    NSArray *pushArray = [notificationDic valueForKey:@"push"];
+                    capabilities.notificationPush = [pushArray componentsJoinedByString:@","];
+                }
+                
+                // SPREED
+                
+                NSDictionary *spreedDic = [capabilitiesDict valueForKey:@"spreed"];
+                if (spreedDic) {
+                    capabilities.isSpreedServerEnabled = YES;
+                    NSArray *featuresArray = [capabilitiesDict valueForKey:@"features"];
+                    capabilities.spreedFeatures = [featuresArray componentsJoinedByString:@","];
                 }
                 
                 //FILES
@@ -1413,6 +1430,16 @@
                     if ([theming valueForKey:@"background"] && ![[theming valueForKey:@"background"] isEqual:[NSNull null]])
                         capabilities.themingBackground = [theming valueForKey:@"background"];
                 
+                    if ([theming valueForKey:@"background-default"] && ![[theming valueForKey:@"background-default"] isEqual:[NSNull null]]) {
+                        NSNumber *result = (NSNumber*)[theming valueForKey:@"background-default"];
+                        capabilities.themingBackgroundDefault = result.boolValue;
+                    }
+                    
+                    if ([theming valueForKey:@"background-plain"] && ![[theming valueForKey:@"background-plain"] isEqual:[NSNull null]]) {
+                        NSNumber *result = (NSNumber*)[theming valueForKey:@"background-plain"];
+                        capabilities.themingBackgroundPlain = result.boolValue;
+                    }
+                    
                     if ([theming valueForKey:@"color"] && ![[theming valueForKey:@"color"] isEqual:[NSNull null]])
                         capabilities.themingColor = [theming valueForKey:@"color"];
                 
@@ -1452,17 +1479,13 @@
             successRequest(response, capabilities, request.redirectedServer);
             
         } else {
-            
-            failureRequest(response, error, request.redirectedServer);
+            failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
         }
         
     } failure:^(NSHTTPURLResponse *response, NSData *responseData, NSError *error) {
         failureRequest(response, error, request.redirectedServer);
     }];
 }
-
-
-#pragma mark - Remote thumbnails
 
 - (NSURLSessionTask *) getRemoteThumbnailByServer:(NSString*)serverPath ofFilePath:(NSString *)filePath withWidth:(NSInteger)fileWidth andHeight:(NSInteger)fileHeight onCommunication:(OCCommunication *)sharedOCComunication
                      successRequest:(void(^)(NSHTTPURLResponse *response, NSData *thumbnail, NSString *redirectedServer)) successRequest
@@ -1491,8 +1514,6 @@
     return operation;
 }
 
-#pragma mark - Notification Server
-
 - (void)getNotificationServer:(NSString*)serverPath onCommunication:(OCCommunication *)sharedOCComunication successRequest:(void(^)(NSHTTPURLResponse *response, NSArray *listOfNotifications, NSString *redirectedServer)) successRequest failureRequest:(void(^)(NSHTTPURLResponse *response, NSError *error, NSString *redirectedServer)) failureRequest {
     
     serverPath = [serverPath encodeString:NSUTF8StringEncoding];
@@ -1504,15 +1525,14 @@
     [request getNotificationServer:serverPath onCommunication:sharedOCComunication success:^(NSHTTPURLResponse *response, id responseObject) {
         
         NSData *responseData = (NSData*) responseObject;
-        
+        NSMutableArray *listOfNotifications = [NSMutableArray new];
+
         //Parse
         NSError *error;
         NSDictionary *jsongParsed = [NSJSONSerialization JSONObjectWithData:responseData options:NSJSONReadingMutableContainers error:&error];
         NSLog(@"[LOG] Notifications : %@",jsongParsed);
         
-        NSMutableArray *listOfNotifications = [NSMutableArray new];
-
-        if (jsongParsed.allKeys > 0) {
+        if (jsongParsed && jsongParsed.allKeys > 0) {
         
             NSDictionary *ocs = [jsongParsed valueForKey:@"ocs"];
             NSDictionary *meta = [ocs valueForKey:@"meta"];
@@ -1605,22 +1625,20 @@
                     [listOfNotifications addObject:notification];
                 }
                 
+                successRequest(response, listOfNotifications, request.redirectedServer);
+                
             } else {
                 
-                NSString *message = (NSString*)[meta objectForKey:@"message"];
-                
+                NSString *message = (NSString *)[meta objectForKey:@"message"];
                 if ([message isKindOfClass:[NSNull class]]) {
-                    message = @"";
+                    message = NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil);
                 }
-                
-                NSError *error = [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message];
-                failureRequest(response, error, request.redirectedServer);
+                failureRequest(response, [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message], request.redirectedServer);
             }
+        } else {
+            failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
         }
     
-        //Return success
-        successRequest(response, listOfNotifications, request.redirectedServer);
-        
     } failure:^(NSHTTPURLResponse *response, NSData *responseData, NSError *error) {
         failureRequest(response, error, request.redirectedServer);
     }];
@@ -1695,8 +1713,6 @@
     }];
 }
 
-#pragma mark - Activity
-
 - (void) getActivityServer:(NSString*)serverPath onCommunication:(OCCommunication *)sharedOCComunication successRequest:(void(^)(NSHTTPURLResponse *response, NSArray *listOfActivity, NSString *redirectedServer)) successRequest failureRequest:(void(^)(NSHTTPURLResponse *response, NSError *error, NSString *redirectedServer)) failureRequest {
 
     serverPath = [serverPath encodeString:NSUTF8StringEncoding];
@@ -1708,15 +1724,14 @@
     [request getActivityServer:serverPath onCommunication:sharedOCComunication success:^(NSHTTPURLResponse *response, id responseObject) {
         
         NSData *responseData = (NSData*) responseObject;
-        
+        NSMutableArray *listOfActivity = [NSMutableArray new];
+
         //Parse
         NSError *error;
         NSDictionary *jsongParsed = [NSJSONSerialization JSONObjectWithData:responseData options:NSJSONReadingMutableContainers error:&error];
         NSLog(@"[LOG] Activity : %@",jsongParsed);
         
-        NSMutableArray *listOfActivity = [NSMutableArray new];
-        
-        if (jsongParsed.allKeys > 0) {
+        if (jsongParsed && jsongParsed.allKeys > 0) {
             
             NSDictionary *ocs = [jsongParsed valueForKey:@"ocs"];
             NSDictionary *meta = [ocs valueForKey:@"meta"];
@@ -1760,29 +1775,25 @@
                     [listOfActivity addObject:activity];
                 }
                 
+                successRequest(response, listOfActivity, request.redirectedServer);
+
             } else {
                 
-                NSString *message = (NSString*)[meta objectForKey:@"message"];
-                
+                NSString *message = (NSString *)[meta objectForKey:@"message"];
                 if ([message isKindOfClass:[NSNull class]]) {
-                    message = @"";
+                    message = NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil);
                 }
-                
-                NSError *error = [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message];
-                failureRequest(response, error, request.redirectedServer);
+                failureRequest(response, [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message], request.redirectedServer);
             }
+            
+        } else {
+            failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
         }
-
-        //Return success
-        successRequest(response, listOfActivity, request.redirectedServer);
 
     } failure:^(NSHTTPURLResponse *response, NSData *responseData, NSError *error) {
         failureRequest(response, error, request.redirectedServer);
     }];
 }
-
-
-#pragma mark - External sites
 
 - (void) getExternalSitesServer:(NSString*)serverPath onCommunication:(OCCommunication *)sharedOCComunication successRequest:(void(^)(NSHTTPURLResponse *response, NSArray *listOfExternalSites, NSString *redirectedServer)) successRequest failureRequest:(void(^)(NSHTTPURLResponse *response, NSError *error, NSString *redirectedServer)) failureRequest {
     serverPath = [serverPath encodeString:NSUTF8StringEncoding];
@@ -1794,15 +1805,14 @@
     [request getExternalSitesServer:serverPath onCommunication:sharedOCComunication success:^(NSHTTPURLResponse *response, id responseObject) {
         
         NSData *responseData = (NSData*) responseObject;
-        
+        NSMutableArray *listOfExternalSites = [NSMutableArray new];
+
         //Parse
         NSError *error;
         NSDictionary *jsongParsed = [NSJSONSerialization JSONObjectWithData:responseData options:NSJSONReadingMutableContainers error:&error];
         NSLog(@"[LOG] External Sites : %@",jsongParsed);
         
-        NSMutableArray *listOfExternalSites = [NSMutableArray new];
-        
-        if (jsongParsed.allKeys > 0) {
+        if (jsongParsed && jsongParsed.allKeys > 0) {
             
             NSDictionary *ocs = [jsongParsed valueForKey:@"ocs"];
             NSDictionary *meta = [ocs valueForKey:@"meta"];
@@ -1836,30 +1846,25 @@
                     [listOfExternalSites addObject:externalSites];
                 }
                 
+                successRequest(response, listOfExternalSites, request.redirectedServer);
+
             } else {
                 
-                NSString *message = (NSString*)[meta objectForKey:@"message"];
-                
+                NSString *message = (NSString *)[meta objectForKey:@"message"];
                 if ([message isKindOfClass:[NSNull class]]) {
-                    message = @"";
+                    message = NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil);
                 }
-                
-                NSError *error = [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message];
-                failureRequest(response, error, request.redirectedServer);
+                failureRequest(response, [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message], request.redirectedServer);
             }
+            
+        } else {
+            failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
         }
-        
-        //Return success
-        successRequest(response, listOfExternalSites, request.redirectedServer);
         
     } failure:^(NSHTTPURLResponse *response, NSData *responseData, NSError *error) {
         failureRequest(response, error, request.redirectedServer);
     }];
 }
-
-
-
-#pragma mark - User Profile
 
 - (void) getUserProfileServer:(NSString*)serverPath onCommunication:(OCCommunication *)sharedOCComunication successRequest:(void(^)(NSHTTPURLResponse *response, OCUserProfile *userProfile, NSString *redirectedServer)) successRequest failureRequest:(void(^)(NSHTTPURLResponse *response, NSError *error, NSString *redirectedServer)) failureRequest {
     
@@ -1872,15 +1877,14 @@
     [request getUserProfileServer:serverPath onCommunication:sharedOCComunication success:^(NSHTTPURLResponse *response, id responseObject) {
     
         NSData *responseData = (NSData*) responseObject;
-        
+        OCUserProfile *userProfile = [OCUserProfile new];
+
         //Parse
         NSError *error;
         NSDictionary *jsongParsed = [NSJSONSerialization JSONObjectWithData:responseData options:NSJSONReadingMutableContainers error:&error];
         NSLog(@"[LOG] User Profile : %@",jsongParsed);
         
-        OCUserProfile *userProfile = [OCUserProfile new];
-        
-        if (jsongParsed.allKeys > 0) {
+        if (jsongParsed && jsongParsed.allKeys > 0) {
 
             NSDictionary *ocs = [jsongParsed valueForKey:@"ocs"];
             NSDictionary *meta = [ocs valueForKey:@"meta"];
@@ -1893,8 +1897,8 @@
                 if ([data valueForKey:@"address"] && ![[data valueForKey:@"address"] isKindOfClass:[NSNull class]])
                     userProfile.address = [data valueForKey:@"address"];
                 
-                if ([data valueForKey:@"displayname"] && ![[data valueForKey:@"displayname"] isKindOfClass:[NSNull class]])
-                    userProfile.displayName = [data valueForKey:@"displayname"];
+                if ([data valueForKey:@"display-name"] && ![[data valueForKey:@"display-name"] isKindOfClass:[NSNull class]])
+                    userProfile.displayName = [data valueForKey:@"display-name"];
               
                 if ([data valueForKey:@"email"] && ![[data valueForKey:@"email"] isKindOfClass:[NSNull class]])
                     userProfile.email = [data valueForKey:@"email"];
@@ -1936,21 +1940,20 @@
                         userProfile.quotaUsed = [[quota valueForKey:@"used"] doubleValue];
                 }
                 
+                successRequest(response, userProfile, request.redirectedServer);
+
             } else {
                 
-                NSString *message = (NSString*)[meta objectForKey:@"message"];
-                
+                NSString *message = (NSString *)[meta objectForKey:@"message"];
                 if ([message isKindOfClass:[NSNull class]]) {
-                    message = @"";
+                    message = NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil);
                 }
-                
-                NSError *error = [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message];
-                failureRequest(response, error, request.redirectedServer);
+                failureRequest(response, [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message], request.redirectedServer);
             }
+            
+        } else {
+            failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
         }
-        
-        //Return success
-        successRequest(response, userProfile, request.redirectedServer);
         
     } failure:^(NSHTTPURLResponse *response, NSData *responseData, NSError *error) {
     
@@ -1972,14 +1975,14 @@
     [request getEndToEndPublicKeys:serverPath onCommunication:sharedOCComunication success:^(NSHTTPURLResponse *response, id responseObject) {
         
         NSData *responseData = (NSData*) responseObject;
-        NSString *publicKey;
+        NSString *publicKey = @"";
         
         //Parse
         NSError *error;
         NSDictionary *jsongParsed = [NSJSONSerialization JSONObjectWithData:responseData options:NSJSONReadingMutableContainers error:&error];
         NSLog(@"[LOG] E2E Get PublicKey : %@",jsongParsed);
         
-        if (jsongParsed.allKeys > 0) {
+        if (jsongParsed && jsongParsed.allKeys > 0) {
             
             NSDictionary *ocs = [jsongParsed valueForKey:@"ocs"];
             NSDictionary *meta = [ocs valueForKey:@"meta"];
@@ -1993,23 +1996,25 @@
                     
                     NSDictionary *publickeys = [data valueForKey:@"public-keys"];
                     publicKey = [publickeys valueForKey:self.userID];
+                    
+                    successRequest(response, publicKey, request.redirectedServer);
+                    
+                } else {
+                    failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
                 }
                 
             } else {
                 
-                NSString *message = (NSString*)[meta objectForKey:@"message"];
-                
+                NSString *message = (NSString *)[meta objectForKey:@"message"];
                 if ([message isKindOfClass:[NSNull class]]) {
-                    message = @"";
+                    message = NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil);
                 }
-                
-                NSError *error = [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message];
-                failureRequest(response, error, request.redirectedServer);
+                failureRequest(response, [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message], request.redirectedServer);
             }
+            
+        } else {
+            failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
         }
-        
-        //Return success
-        successRequest(response, publicKey, request.redirectedServer);
         
     } failure:^(NSHTTPURLResponse *response, NSData *responseData, NSError *error) {
         
@@ -2030,14 +2035,14 @@
     [request getEndToEndPrivateKeyCipher:serverPath onCommunication:sharedOCComunication success:^(NSHTTPURLResponse *response, id responseObject) {
         
         NSData *responseData = (NSData*) responseObject;
-        NSString *privateKeyChiper;
+        NSString *privateKeyChiper = @"";
         
         //Parse
         NSError *error;
         NSDictionary *jsongParsed = [NSJSONSerialization JSONObjectWithData:responseData options:NSJSONReadingMutableContainers error:&error];
         NSLog(@"[LOG] E2E Get PrivateKey : %@",jsongParsed);
         
-        if (jsongParsed.allKeys > 0) {
+        if (jsongParsed && jsongParsed.allKeys > 0) {
             
             NSDictionary *ocs = [jsongParsed valueForKey:@"ocs"];
             NSDictionary *meta = [ocs valueForKey:@"meta"];
@@ -2047,24 +2052,25 @@
             
             if (statusCode == kOCUserProfileAPISuccessful) {
                 
-                if ([data valueForKey:@"private-key"] && ![[data valueForKey:@"private-key"] isKindOfClass:[NSNull class]])
+                if ([data valueForKey:@"private-key"] && ![[data valueForKey:@"private-key"] isKindOfClass:[NSNull class]]) {
+                    
                     privateKeyChiper = [data valueForKey:@"private-key"];
-                
+                    successRequest(response, privateKeyChiper, request.redirectedServer);
+                    
+                } else {
+                    failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
+                }
             } else {
                 
-                NSString *message = (NSString*)[meta objectForKey:@"message"];
-                
+                NSString *message = (NSString *)[meta objectForKey:@"message"];
                 if ([message isKindOfClass:[NSNull class]]) {
-                    message = @"";
+                    message = NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil);
                 }
-                
-                NSError *error = [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message];
-                failureRequest(response, error, request.redirectedServer);
+                failureRequest(response, [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message], request.redirectedServer);
             }
+        } else {
+            failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
         }
-        
-        //Return success
-        successRequest(response, privateKeyChiper, request.redirectedServer);
         
     } failure:^(NSHTTPURLResponse *response, NSData *responseData, NSError *error) {
         
@@ -2085,14 +2091,14 @@
     [request getEndToEndServerPublicKey:serverPath onCommunication:sharedOCComunication success:^(NSHTTPURLResponse *response, id responseObject) {
         
         NSData *responseData = (NSData*) responseObject;
-        NSString *publicKey;
+        NSString *publicKey = @"";
         
         //Parse
         NSError *error;
         NSDictionary *jsongParsed = [NSJSONSerialization JSONObjectWithData:responseData options:NSJSONReadingMutableContainers error:&error];
         NSLog(@"[LOG] E2E Get Server PublicKey : %@",jsongParsed);
         
-        if (jsongParsed.allKeys > 0) {
+        if (jsongParsed && jsongParsed.allKeys > 0) {
             
             NSDictionary *ocs = [jsongParsed valueForKey:@"ocs"];
             NSDictionary *meta = [ocs valueForKey:@"meta"];
@@ -2105,23 +2111,24 @@
                 if ([data valueForKey:@"public-key"] && ![[data valueForKey:@"public-key"] isKindOfClass:[NSNull class]]) {
                     
                     publicKey = [data valueForKey:@"public-key"];
+                    successRequest(response, publicKey, request.redirectedServer);
+                    
+                } else {
+                    failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
                 }
-                
             } else {
                 
-                NSString *message = (NSString*)[meta objectForKey:@"message"];
-                
+                NSString *message = (NSString *)[meta objectForKey:@"message"];
                 if ([message isKindOfClass:[NSNull class]]) {
-                    message = @"";
+                    message = NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil);
                 }
-                
-                NSError *error = [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message];
-                failureRequest(response, error, request.redirectedServer);
+                failureRequest(response, [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message], request.redirectedServer);
             }
+        } else {
+            failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
         }
         
         //Return success
-        successRequest(response, publicKey, request.redirectedServer);
         
     } failure:^(NSHTTPURLResponse *response, NSData *responseData, NSError *error) {
         
@@ -2142,14 +2149,14 @@
     [request signEndToEndPublicKey:serverPath key:publicKey onCommunication:sharedOCComunication success:^(NSHTTPURLResponse *response, id responseObject) {
         
         NSData *responseData = (NSData*) responseObject;
-        NSString *publicKey;
+        NSString *publicKey = @"";
         
         //Parse
         NSError *error;
         NSDictionary *jsongParsed = [NSJSONSerialization JSONObjectWithData:responseData options:NSJSONReadingMutableContainers error:&error];
         NSLog(@"[LOG] E2E Sign PublicKey : %@",jsongParsed);
         
-        if (jsongParsed.allKeys > 0) {
+        if (jsongParsed && jsongParsed.allKeys > 0) {
             
             NSDictionary *ocs = [jsongParsed valueForKey:@"ocs"];
             NSDictionary *meta = [ocs valueForKey:@"meta"];
@@ -2162,23 +2169,22 @@
                 if ([data valueForKey:@"public-key"] && ![[data valueForKey:@"public-key"] isKindOfClass:[NSNull class]]) {
                     
                     publicKey = [data valueForKey:@"public-key"];
+                    successRequest(response, publicKey, request.redirectedServer);
+                    
+                } else {
+                    failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
                 }
-                
             } else {
                 
-                NSString *message = (NSString*)[meta objectForKey:@"message"];
-                
+                NSString *message = (NSString *)[meta objectForKey:@"message"];
                 if ([message isKindOfClass:[NSNull class]]) {
-                    message = @"";
+                    message = NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil);
                 }
-                
-                NSError *error = [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message];
-                failureRequest(response, error, request.redirectedServer);
+                failureRequest(response, [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message], request.redirectedServer);
             }
+        } else {
+            failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
         }
-        
-        //Return success
-        successRequest(response, publicKey, request.redirectedServer);
         
     } failure:^(NSHTTPURLResponse *response, NSData *responseData, NSError *error) {
         
@@ -2199,14 +2205,14 @@
     [request storeEndToEndPrivateKeyCipher:serverPath key:privateKeyChiper onCommunication:sharedOCComunication success:^(NSHTTPURLResponse *response, id responseObject) {
         
         NSData *responseData = (NSData*) responseObject;
-        NSString *privateKey;
+        NSString *privateKey = @"";
         
         //Parse
         NSError *error;
         NSDictionary *jsongParsed = [NSJSONSerialization JSONObjectWithData:responseData options:NSJSONReadingMutableContainers error:&error];
         NSLog(@"[LOG] E2E Store PrivateKey : %@",jsongParsed);
         
-        if (jsongParsed.allKeys > 0) {
+        if (jsongParsed && jsongParsed.allKeys > 0) {
             
             NSDictionary *ocs = [jsongParsed valueForKey:@"ocs"];
             NSDictionary *meta = [ocs valueForKey:@"meta"];
@@ -2219,23 +2225,23 @@
                 if ([data valueForKey:@"private-key"] && ![[data valueForKey:@"private-key"] isKindOfClass:[NSNull class]]) {
                     
                     privateKey = [data valueForKey:@"private-key"];
+                    successRequest(response, privateKey, request.redirectedServer);
+                    
+                } else {
+                    failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
                 }
                 
             } else {
                 
-                NSString *message = (NSString*)[meta objectForKey:@"message"];
-                
+                NSString *message = (NSString *)[meta objectForKey:@"message"];
                 if ([message isKindOfClass:[NSNull class]]) {
-                    message = @"";
+                    message = NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil);
                 }
-                
-                NSError *error = [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message];
-                failureRequest(response, error, request.redirectedServer);
+                failureRequest(response, [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message], request.redirectedServer);
             }
+        } else {
+            failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
         }
-        
-        //Return success
-        successRequest(response, privateKey, request.redirectedServer);
         
     } failure:^(NSHTTPURLResponse *response, NSData *responseData, NSError *error) {
         
@@ -2345,14 +2351,14 @@
     [request lockEndToEndFolderEncrypted:serverPath onCommunication:sharedOCComunication success:^(NSHTTPURLResponse *response, id responseObject) {
         
         NSData *responseData = (NSData*) responseObject;
-        NSString *token;
+        NSString *token = @"";
         
         //Parse
         NSError *error;
         NSDictionary *jsongParsed = [NSJSONSerialization JSONObjectWithData:responseData options:NSJSONReadingMutableContainers error:&error];
         NSLog(@"[LOG] E2E Lock File : %@",jsongParsed);
         
-        if (jsongParsed.allKeys > 0) {
+        if (jsongParsed && jsongParsed.allKeys > 0) {
             
             NSDictionary *ocs = [jsongParsed valueForKey:@"ocs"];
             NSDictionary *meta = [ocs valueForKey:@"meta"];
@@ -2365,23 +2371,22 @@
                 if ([data valueForKey:@"token"] && ![[data valueForKey:@"token"] isKindOfClass:[NSNull class]]) {
                     
                     token = [data valueForKey:@"token"];
+                    successRequest(response, token, request.redirectedServer);
+                    
+                } else {
+                    failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
                 }
-                
             } else {
                 
-                NSString *message = (NSString*)[meta objectForKey:@"message"];
-                
+                NSString *message = (NSString *)[meta objectForKey:@"message"];
                 if ([message isKindOfClass:[NSNull class]]) {
-                    message = @"";
+                    message = NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil);
                 }
-                
-                NSError *error = [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message];
-                failureRequest(response, error, request.redirectedServer);
+                failureRequest(response, [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message], request.redirectedServer);
             }
+        } else {
+            failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
         }
-        
-        //Return success
-        successRequest(response, token, request.redirectedServer);
         
     } failure:^(NSHTTPURLResponse *response, NSData *responseData, NSError *error) {
         
@@ -2423,14 +2428,14 @@
     [request getEndToEndMetadata:serverPath onCommunication:sharedOCComunication success:^(NSHTTPURLResponse *response, id responseObject) {
         
         NSData *responseData = (NSData*) responseObject;
-        NSString *encryptedMetadata;
+        NSString *encryptedMetadata = @"";
         
         //Parse
         NSError *error;
         NSDictionary *jsongParsed = [NSJSONSerialization JSONObjectWithData:responseData options:NSJSONReadingMutableContainers error:&error];
         NSLog(@"[LOG] E2E Get Metadata : %@",jsongParsed);
         
-        if (jsongParsed.allKeys > 0) {
+        if (jsongParsed && jsongParsed.allKeys > 0) {
             
             NSDictionary *ocs = [jsongParsed valueForKey:@"ocs"];
             NSDictionary *meta = [ocs valueForKey:@"meta"];
@@ -2443,23 +2448,21 @@
                 if ([data valueForKey:@"meta-data"] && ![[data valueForKey:@"meta-data"] isKindOfClass:[NSNull class]]) {
                     
                     encryptedMetadata = [data valueForKey:@"meta-data"];
+                    successRequest(response, encryptedMetadata, request.redirectedServer);
+                    
+                } else {
+                    failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
                 }
-                
             } else {
-                
-                NSString *message = (NSString*)[meta objectForKey:@"message"];
-                
+                NSString *message = (NSString *)[meta objectForKey:@"message"];
                 if ([message isKindOfClass:[NSNull class]]) {
-                    message = @"";
+                    message = NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil);
                 }
-                
-                NSError *error = [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message];
-                failureRequest(response, error, request.redirectedServer);
+                failureRequest(response, [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message], request.redirectedServer);
             }
+        } else {
+            failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
         }
-        
-        //Return success
-        successRequest(response, encryptedMetadata, request.redirectedServer);
         
     } failure:^(NSHTTPURLResponse *response, NSData *responseData, NSError *error) {
         
@@ -2482,14 +2485,14 @@
     [request storeEndToEndMetadata:serverPath metadata:encryptedMetadata onCommunication:sharedOCComunication success:^(NSHTTPURLResponse *response, id responseObject) {
         
         NSData *responseData = (NSData*) responseObject;
-        NSString *encryptedMetadata;
+        NSString *encryptedMetadata = @"";
         
         //Parse
         NSError *error;
         NSDictionary *jsongParsed = [NSJSONSerialization JSONObjectWithData:responseData options:NSJSONReadingMutableContainers error:&error];
         NSLog(@"[LOG] E2E Store Metadata : %@",jsongParsed);
         
-        if (jsongParsed.allKeys > 0) {
+        if (jsongParsed && jsongParsed.allKeys > 0) {
             
             NSDictionary *ocs = [jsongParsed valueForKey:@"ocs"];
             NSDictionary *meta = [ocs valueForKey:@"meta"];
@@ -2499,26 +2502,25 @@
             
             if (statusCode == kOCUserProfileAPISuccessful) {
                 
-                if ([data valueForKey:@"encrypted-meta-data"] && ![[data valueForKey:@"encrypted-meta-data"] isKindOfClass:[NSNull class]]) {
+                if ([data valueForKey:@"meta-data"] && ![[data valueForKey:@"meta-data"] isKindOfClass:[NSNull class]]) {
                     
-                    encryptedMetadata = [data valueForKey:@"encrypted-meta-data"];
+                    encryptedMetadata = [data valueForKey:@"meta-data"];
+                    successRequest(response, encryptedMetadata, request.redirectedServer);
+                    
+                } else {
+                    failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
                 }
-                
             } else {
                 
-                NSString *message = (NSString*)[meta objectForKey:@"message"];
-                
+                NSString *message = (NSString *)[meta objectForKey:@"message"];
                 if ([message isKindOfClass:[NSNull class]]) {
-                    message = @"";
+                    message = NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil);
                 }
-                
-                NSError *error = [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message];
-                failureRequest(response, error, request.redirectedServer);
+                failureRequest(response, [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message], request.redirectedServer);
             }
+        } else {
+            failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
         }
-        
-        //Return success
-        successRequest(response, encryptedMetadata, request.redirectedServer);
         
     } failure:^(NSHTTPURLResponse *response, NSData *responseData, NSError *error) {
         
@@ -2542,14 +2544,14 @@
     [request updateEndToEndMetadata:serverPath metadata:encryptedMetadata onCommunication:sharedOCComunication success:^(NSHTTPURLResponse *response, id responseObject) {
         
         NSData *responseData = (NSData*) responseObject;
-        NSString *encryptedMetadata;
+        NSString *encryptedMetadata = @"";
         
         //Parse
         NSError *error;
         NSDictionary *jsongParsed = [NSJSONSerialization JSONObjectWithData:responseData options:NSJSONReadingMutableContainers error:&error];
         NSLog(@"[LOG] E2E Update Metadata : %@",jsongParsed);
         
-        if (jsongParsed.allKeys > 0) {
+        if (jsongParsed && jsongParsed.allKeys > 0) {
             
             NSDictionary *ocs = [jsongParsed valueForKey:@"ocs"];
             NSDictionary *meta = [ocs valueForKey:@"meta"];
@@ -2562,23 +2564,22 @@
                 if ([data valueForKey:@"meta-data"] && ![[data valueForKey:@"meta-data"] isKindOfClass:[NSNull class]]) {
                     
                     encryptedMetadata = [data valueForKey:@"meta-data"];
+                    successRequest(response, encryptedMetadata, request.redirectedServer);
+                    
+                } else {
+                    failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
                 }
-                
             } else {
                 
-                NSString *message = (NSString*)[meta objectForKey:@"message"];
-                
+                NSString *message = (NSString *)[meta objectForKey:@"message"];
                 if ([message isKindOfClass:[NSNull class]]) {
-                    message = @"";
+                    message = NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil);
                 }
-                
-                NSError *error = [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message];
-                failureRequest(response, error, request.redirectedServer);
+                failureRequest(response, [UtilsFramework getErrorWithCode:statusCode andCustomMessageFromTheServer:message], request.redirectedServer);
             }
+        } else {
+            failureRequest(response, [UtilsFramework getErrorWithCode:k_CCErrorWebdavResponseError andCustomMessageFromTheServer:NSLocalizedStringFromTable(@"_server_response_error_", @"Error", nil)], request.redirectedServer);
         }
-        
-        //Return success
-        successRequest(response, encryptedMetadata, request.redirectedServer);
         
     } failure:^(NSHTTPURLResponse *response, NSData *responseData, NSError *error) {
         

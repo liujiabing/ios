@@ -5,7 +5,49 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### [2.19.2] - 2018-xx-xx
+### [2.20.8] - 2018-xx-xx
+- See https://github.com/nextcloud/ios/milestone/30
+
+## [2.20.7] - 2018-03-26
+- See https://github.com/nextcloud/ios/milestone/29
+
+## [2.20.6] - 2018-03-21
+- See https://github.com/nextcloud/ios/milestone/28
+
+## [2.20.5] - 2018-03-08
+- See https://github.com/nextcloud/ios/milestone/27
+
+## [2.20.4] - 2018-03-05
+- See https://github.com/nextcloud/ios/milestone/26
+
+## [2.20.3] - 2018-02-22
+### Changed
+- See https://github.com/nextcloud/ios/milestone/24
+
+## [2.20.2] - 2018-02-18
+### Changed
+- No information available
+
+## [2.20.1] - 2018-02-15
+### Changed
+- See https://github.com/nextcloud/ios/milestone/23
+
+## [2.20.0] - 2018-02-09
+### Changed
+- See https://github.com/nextcloud/ios/milestone/22
+
+## [2.19.3] - 2018-02-06
+### Changed
+- See https://github.com/nextcloud/ios/milestone/21
+
+## [2.19.2] - 2018-02-03
+### Fixed
+- Icons and labels overlap on iPad Pro. See [Details](https://github.com/nextcloud/ios/issues/476)
+- Not showing correct data usage. See [Details](https://github.com/nextcloud/ios/issues/451)
+- Negative file size. See [Details](https://github.com/nextcloud/ios/issues/448)
+
+### Changed
+- Replace icon for shared folders. See See [Details](https://github.com/nextcloud/ios/issues/458)
 - See https://github.com/nextcloud/ios/milestone/20
 
 ## [2.19.1] - 2017-12-22

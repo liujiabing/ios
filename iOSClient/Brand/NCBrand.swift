@@ -68,17 +68,17 @@ class NCBrandColor: NSObject {
     
     @objc public let brand:                           String = "Nextcloud"
     @objc public let mailMe:                          String = "ios@nextcloud.com"
-    @objc public let textCopyrightNextcloudiOS:       String = "Nextcloud for iOS %@ © 2017 T.W.S. Inc."
+    @objc public let textCopyrightNextcloudiOS:       String = "Nextcloud for iOS %@ © 2018 T.W.S. Inc."
     @objc public let textCopyrightNextcloudServer:    String = "Nextcloud Server %@"
     @objc public let loginBaseUrl:                    String = "https://cloud.twsweb.it"
     @objc public let pushNotificationServer:          String = "https://push-notifications.nextcloud.com"
     @objc public let linkLoginProvider:               String = "https://nextcloud.com/providers"
     @objc public let textLoginProvider:               String = "_login_bottom_label_"
     @objc public let middlewarePingUrl:               String = ""
-    @objc public let webLoginAutenticationProtocol:   String = ""                                               // example "abc://"
-    @objc public let webCloseViewProtocol:            String = ""                                               // example "abc://change/plan"
-    @objc public let folderBrandAutoUpload:           String = ""                                               // example "_auto_upload_folder_"
-    @objc public let ncFlowEndpoint:                  String = "/index.php/login/flow"
+    @objc public let webLoginAutenticationProtocol:   String = "nc://"                                          // example "abc://"
+    // Personalized
+    @objc public let webCloseViewProtocolPersonalized:String = ""                                               // example "abc://change/plan"      Don't touch me !!
+    @objc public let folderBrandAutoUpload:           String = ""                                               // example "_auto_upload_folder_"   Don't touch me !!
 
     // Auto Upload default folder
     @objc public var folderDefaultAutoUpload:         String = "Photos"
@@ -87,8 +87,7 @@ class NCBrandColor: NSObject {
     @objc public let capabilitiesGroups:              String = "group.it.twsweb.Crypto-Cloud"
     
     // Options
-    @objc public let use_login_web:                   Bool = false
-    @objc public let use_login_web_flow:              Bool = false
+    @objc public let use_login_web_personalized:      Bool = false                                              // Don't touch me !!
     @objc public let use_firebase:                    Bool = false
     @objc public let use_default_auto_upload:         Bool = false
     @objc public let use_themingColor:                Bool = true

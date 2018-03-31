@@ -46,6 +46,26 @@
     return self;
 }
 
+- (id)copyWithZone: (NSZone *) zone
+{
+    CCSectionDataSourceMetadata *sectionDataSourceMetadata = [[CCSectionDataSourceMetadata allocWithZone: zone] init];
+    
+    [sectionDataSourceMetadata setAllRecordsDataSource: self.allRecordsDataSource];
+    [sectionDataSourceMetadata setAllEtag: self.allEtag];
+    [sectionDataSourceMetadata setSections: self.sections];
+    [sectionDataSourceMetadata setSectionArrayRow: self.sectionArrayRow];
+    [sectionDataSourceMetadata setFileIDIndexPath: self.fileIDIndexPath];
+    
+    [sectionDataSourceMetadata setVideo: self.video];
+    [sectionDataSourceMetadata setImage: self.image];
+    
+    [sectionDataSourceMetadata setDirectories: self.directories];
+    [sectionDataSourceMetadata setFiles: self.files];
+    [sectionDataSourceMetadata setTotalSize: self.totalSize];
+    
+    return sectionDataSourceMetadata;
+}
+
 @end
 
 
@@ -54,7 +74,7 @@
 //
 // orderByField : nil, date, typeFile
 //
-+ (CCSectionDataSourceMetadata *)creataDataSourseSectionMetadata:(NSArray *)records listProgressMetadata:(NSMutableDictionary *)listProgressMetadata e2eEncryptions:(NSArray *)e2eEncryptions groupByField:(NSString *)groupByField activeAccount:(NSString *)activeAccount
++ (CCSectionDataSourceMetadata *)creataDataSourseSectionMetadata:(NSArray *)records listProgressMetadata:(NSMutableDictionary *)listProgressMetadata groupByField:(NSString *)groupByField activeAccount:(NSString *)activeAccount
 {
     id dataSection;
     long counterSessionDownload = 0;
@@ -69,7 +89,9 @@
     */
     
     NSInteger numDirectory = 0;
+    NSInteger numDirectoryFavorite = 0;
     BOOL directoryOnTop = [CCUtility getDirectoryOnTop];
+    NSMutableArray *metadataFilesFavorite = [NSMutableArray new];
     
     for (tableMetadata* metadata in records) {
         
@@ -80,12 +102,23 @@
         } else {
             
             if (metadata.directory && directoryOnTop) {
-                [copyRecords insertObject:metadata atIndex:numDirectory++];
+                if (metadata.favorite) {
+                    [copyRecords insertObject:metadata atIndex:numDirectoryFavorite++];
+                    numDirectory++;
+                } else {
+                    [copyRecords insertObject:metadata atIndex:numDirectory++];
+                }
             } else {
-                [copyRecords addObject:metadata];
+                if (metadata.favorite && directoryOnTop) {
+                    [metadataFilesFavorite addObject:metadata];
+                } else {
+                    [copyRecords addObject:metadata];
+                }
             }
         }
     }
+    if (directoryOnTop && metadataFilesFavorite.count > 0)
+        [copyRecords insertObjects:metadataFilesFavorite atIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(numDirectoryFavorite, metadataFilesFavorite.count)]]; // Add Favorite files at end of favorite folders
     
     /*
      sectionArrayRow

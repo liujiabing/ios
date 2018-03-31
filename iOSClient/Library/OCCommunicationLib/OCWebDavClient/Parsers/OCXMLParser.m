@@ -169,11 +169,8 @@ NSString *OCCWebDAVURIKey           = @"uri";
             _currentFile.fileName = lastBit;
         }
             
-        NSString *decodedFileName = [self decodeFromPercentEscapeString:self.currentFile.fileName];
-        NSString *decodedFilePath = [self decodeFromPercentEscapeString:self.currentFile.filePath];
-            
-        self.currentFile.fileName = [decodedFileName encodeString:NSUTF8StringEncoding];
-        self.currentFile.filePath = [decodedFilePath encodeString:NSUTF8StringEncoding];
+        self.currentFile.fileName = [self.currentFile.fileName stringByRemovingPercentEncoding];
+        self.currentFile.filePath = [self.currentFile.filePath stringByRemovingPercentEncoding];
             
         isNotFirstFileOfList = YES;
 
@@ -204,8 +201,9 @@ NSString *OCCWebDAVURIKey           = @"uri";
         _currentFile.ocId = _xmlChars;
         
     } else if ([elementName hasSuffix:@":getetag"] && [_xmlChars length]) {
+        
         //ETAG
-        NSLog(@"getetag: %@", _xmlChars);
+        //NSLog(@"getetag: %@", _xmlChars);
         
         NSString *stringClean = _xmlChars;
         stringClean = [_xmlChars stringByReplacingOccurrencesOfString:@"\"" withString:@""];
@@ -252,15 +250,5 @@ NSString *OCCWebDAVURIKey           = @"uri";
     
     NSLog(@"Finish xml directory list parse");
 }
-
-// Decode a percent escape encoded string.
-- (NSString*) decodeFromPercentEscapeString:(NSString *) string {
-    return (__bridge_transfer NSString *) CFURLCreateStringByReplacingPercentEscapesUsingEncoding(NULL,
-                                                                                         (__bridge CFStringRef) string,
-                                                                                         CFSTR(""),
-                                                                                         kCFStringEncodingUTF8);
-}
-
-
 
 @end

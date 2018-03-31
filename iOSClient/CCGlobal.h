@@ -27,8 +27,12 @@ extern NSString *const appApplicationSupport;
 extern NSString *const appDatabaseNextcloud;
 extern NSString *const appCertificates;
 
+extern NSString *const serverStatus;
+
 extern NSString *const webDAV;
 extern NSString *const dav;
+
+extern NSString *const flowEndpoint;
 
 #ifndef EXTENSION
 
@@ -37,6 +41,9 @@ extern NSString *const dav;
 //dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 //dispatch_async(dispatch_get_main_queue(), ^{
 //dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.3 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void) {
+
+//DispatchQueue.main.async
+//DispatchQueue.global().async
 
 #define CALL_ORIGIN NSLog(@"Origin: [%@]", [[[[NSThread callStackSymbols] objectAtIndex:1] componentsSeparatedByCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"[]"]] objectAtIndex:1])
 
@@ -51,6 +58,8 @@ extern NSString *const dav;
 #define k_dismissAfterSecond                            4
 
 #define k_daysOfActivity                                7
+
+#define k_maxErrorAutoUploadAll                         100
 
 #define k_returnCreateFolderPlain                       0
 #define k_returnCreateFotoVideoPlain                    1
@@ -93,8 +102,8 @@ extern NSString *const dav;
 #define k_download_session_foreground                   @"it.twsweb.Crypto-Cloud.download.sessionforeground"
 #define k_download_session_wwan                         @"it.twsweb.Crypto-Cloud.download.sessionwwan"
 #define k_upload_session                                @"it.twsweb.Crypto-Cloud.upload.session"
-#define k_upload_session_foreground                     @"it.twsweb.Crypto-Cloud.upload.sessionforeground"
 #define k_upload_session_wwan                           @"it.twsweb.Crypto-Cloud.upload.sessionwwan"
+#define k_upload_session_foreground                     @"it.twsweb.Crypto-Cloud.upload.sessionforeground"
 
 // OperationQueue
 #define k_queue                                         @"it.twsweb.Crypto-Cloud.queue"
@@ -115,7 +124,6 @@ extern NSString *const dav;
 #define k_taskIdentifierNULL                            99999
 
 // TaskStatus
-#define k_taskStatusNone                                0
 #define k_taskStatusCancel                              -1
 #define k_taskStatusResume                              -2
 #define k_taskStatusSuspend                             -3
@@ -131,10 +139,10 @@ extern NSString *const dav;
 // Error
 #define k_CCErrorTaskNil                                -9999
 #define k_CCErrorTaskDownloadNotFound                   -9998
-#define k_CCErrorFileUploadNotFound                     -9997
+#define k_CCErrorUserNotAvailble                        -9997
 #define k_CCErrorInternalError                          -9996
-#define k_CCErrorNetworkNowAvailable                    -9995
-#define k_CCErrorFileAlreadyInDownload                  -9994
+#define k_CCErrorFileAlreadyInDownload                  -9995
+#define k_CCErrorWebdavResponseError                    -9994
 
 // Search
 #define k_minCharsSearch                                2
@@ -157,7 +165,6 @@ extern NSString *const dav;
 #define selectorOpenIn                                  @"openIn"
 #define selectorOpenWindowShare                         @"openWindowShare"
 #define selectorReadFile                                @"readFile"
-#define selectorReadFileVerifyUpload                    @"readFileVerifyUpload"
 #define selectorReadFileWithDownload                    @"readFileWithDownload"
 #define selectorReadFileReloadFolder                    @"readFileReloadFolder"
 #define selectorReadFileFolder                          @"readFileFolder"
@@ -169,7 +176,8 @@ extern NSString *const dav;
 #define selectorRename                                  @"rename"
 #define selectorSave                                    @"save"
 #define selectorShare                                   @"share"
-#define selectorSearch                                  @"search"
+#define selectorSearchFiles                             @"searchFiles"
+#define selectorSearchContentType                       @"searchContentType"
 #define selectorUnshare                                 @"unshare"
 #define selectorUpdateShare                             @"updateShare"
 #define selectorUploadAutoUpload                        @"uploadAutoUpload"
@@ -210,9 +218,6 @@ extern NSString *const dav;
 #define actionDeleteEndToEndPublicKey                   @"deleteEndToEndPublicKey"
 #define actionDeleteEndToEndPrivateKey                  @"deleteEndToEndPrivateKey"
 #define actionGetEndToEndServerPublicKey                @"getEndToEndServerPublicKey"
-#define actionGetEndToEndMetadata                       @"getEndToEndMetadata"
-#define actionDeleteEndToEndMetadata                    @"deleteEndToEndMetadata"
-#define actionUnlockEndToEndFolderEncrypted             @"unlockEndToEndFolderEncrypted"
 
 // Metadata : FileType
 #define k_metadataTypeFile_audio                        @"audio"
@@ -261,8 +266,11 @@ extern NSString *const dav;
 #define k_activityDebugActionCapabilities               @"Capabilities Of Server"
 #define k_activityDebugActionEndToEndEncryption         @"End To End Encryption "
 
-// E2E
+// E2EE
 #define k_max_filesize_E2E                              524288000   // 500 MB
+
+// Flow Version
+#define k_flow_version_available                        12
 
 // -----------------------------------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------------------------------

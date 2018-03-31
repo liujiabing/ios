@@ -64,15 +64,10 @@
 - (void)uploadFile:(NSString *)fileName serverUrl:(NSString *)serverUrl session:(NSString *)session taskStatus:(NSInteger)taskStatus selector:(NSString *)selector selectorPost:(NSString *)selectorPost errorCode:(NSInteger)errorCode delegate:(id)delegate;
 - (void)uploadFileMetadata:(tableMetadata *)metadata taskStatus:(NSInteger)taskStatus;
 
-// Verify Download/Upload
-- (void)verifyDownloadInProgress;
-- (void)verifyDownloadInError:(id)delegate;
-- (void)verifyUploadInProgress;
-- (void)verifyUploadInErrorOrWait;
+// Utility
 
-// E2E Encryption
-- (NSError *)SendEndToEndMetadataOnServerUrl:(NSString *)serverUrl;
-- (NSError *)rebuildAndSendEndToEndMetadataOnServerUrl:(NSString *)serverUrl;
+- (NSInteger)getNumDownloadInProgressWWan:(BOOL)WWan;
+- (NSInteger)getNumUploadInProgressWWan:(BOOL)WWan;
 
 @end
 
@@ -95,14 +90,13 @@
 @property (nonatomic, strong) NSString *account;
 @property (nonatomic, strong) NSString *action;
 @property (nonatomic, strong) NSString *assetLocalIdentifier;
-@property (nonatomic, strong) NSString *contentType;
+@property (nonatomic, strong) NSArray *contentType;
 @property (nonatomic, strong) NSDate *date;
 @property (nonatomic, weak) id delegate;
 @property (nonatomic, strong) NSString *depth;
 @property BOOL directory;
 @property (nonatomic, strong) NSString *directoryID;
 @property (nonatomic, strong) NSString *directoryIDTo;
-@property BOOL e2eEncrypted;
 @property (nonatomic, strong) NSString *encryptedMetadata;
 @property NSInteger errorCode;
 @property NSInteger errorRetry;
@@ -129,7 +123,6 @@
 @property NSInteger sharePermission;
 @property long size;
 @property NSInteger taskStatus;
-@property (nonatomic, strong) NSString *token;
 
 - (id)initWithAccount:(NSString *)withAccount;
 - (id)copyWithZone:(NSZone *)zone;

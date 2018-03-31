@@ -115,7 +115,6 @@
     [row.cellConfig setObject:[UIFont systemFontOfSize:15.0]forKey:@"textLabel.font"];
     [section addFormRow:row];
     
-    /*
     // Section : E2EEncryption --------------------------------------------------------------
 
     section = [XLFormSectionDescriptor formSectionWithTitle:NSLocalizedString(@"_e2e_settings_title_", nil)];
@@ -128,7 +127,6 @@
     [row.cellConfig setObject:[UIImage imageNamed:@"settingsE2EEncryption"] forKey:@"imageView.image"];
     row.action.viewControllerClass = [NCManageEndToEndEncryption class];
     [section addFormRow:row];
-    */
     
     // Section Advanced -------------------------------------------------
     
@@ -406,7 +404,7 @@
         } 
     }
     
-    [appDelegate.activeFavorites readListingFavorites];
+    [appDelegate.activeFavorites listingFavorites];
 }
 
 #pragma --------------------------------------------------------------------------------------------
@@ -427,7 +425,7 @@
             sectionName = NSLocalizedString(@"_lock_protection_no_screen_footer_", nil);
         }
         break;
-        case 4: {
+        case 5: {
             
             tableCapabilities *capabilities = [[NCManageDatabase sharedInstance] getCapabilites];
             
@@ -438,7 +436,9 @@
             NSString *versionNextcloud = [NSString stringWithFormat:[NCBrandOptions sharedInstance].textCopyrightNextcloudServer, versionServer];
             NSString *versionNextcloudiOS = [NSString stringWithFormat:[NCBrandOptions sharedInstance].textCopyrightNextcloudiOS, versionApp];
             
-            sectionName = [NSString stringWithFormat:@"%@\n%@", versionNextcloudiOS, versionNextcloud];
+            NSString *nameSlogan = [NSString stringWithFormat:@"%@ - %@", capabilities.themingName, capabilities.themingSlogan];
+            
+            sectionName = [NSString stringWithFormat:@"%@\n\n%@\n%@", versionNextcloudiOS, versionNextcloud, nameSlogan];
         }
         break;
     }

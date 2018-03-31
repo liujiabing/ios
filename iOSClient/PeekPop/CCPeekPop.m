@@ -90,22 +90,27 @@
 #pragma mark ==== Download Thumbnail ====
 #pragma --------------------------------------------------------------------------------------------
 
-- (void)downloadThumbnailSuccess:(CCMetadataNet *)metadataNet
+- (void)downloadThumbnailSuccessFailure:(CCMetadataNet *)metadataNet message:(NSString *)message errorCode:(NSInteger)errorCode
 {
-    UIImage *image = [UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"%@/%@.pvw",appDelegate.directoryUser, _metadata.fileID]];
+    // Check Active Account
+    if (![metadataNet.account isEqualToString:appDelegate.activeAccount])
+        return;
     
-    _imagePreview.image = image;
-    
-    _imagePreview.contentMode = UIViewContentModeScaleToFill;
-    
-    self.preferredContentSize = CGSizeMake(image.size.width, image.size.height);
-}
-
-- (void)downloadThumbnailFailure:(CCMetadataNet *)metadataNet message:(NSString *)message errorCode:(NSInteger)errorCode
-{    
-    [appDelegate messageNotification:@"_error_" description:message visible:YES delay:k_dismissAfterSecond type:TWMessageBarMessageTypeError errorCode:errorCode];
-    
-    [self dismissViewControllerAnimated:YES completion:nil];
+    if (errorCode == 0) {
+        
+        UIImage *image = [UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"%@/%@.pvw",appDelegate.directoryUser, _metadata.fileID]];
+        
+        _imagePreview.image = image;
+        _imagePreview.contentMode = UIViewContentModeScaleToFill;
+        
+        self.preferredContentSize = CGSizeMake(image.size.width, image.size.height);
+        
+    } else {
+        
+        [appDelegate messageNotification:@"_error_" description:message visible:YES delay:k_dismissAfterSecond type:TWMessageBarMessageTypeError errorCode:errorCode];
+        
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }
 }
 
 - (void)downloadThumbnail:(tableMetadata *)metadata

@@ -24,6 +24,7 @@
 #import "CCPhotos.h"
 #import "AppDelegate.h"
 #import "CCManageAutoUpload.h"
+#import "TOScrollBar.h"
 #import "NCBridgeSwift.h"
 
 @interface CCPhotos () <CCActionsDeleteDelegate, CCActionsDownloadThumbnailDelegate>
@@ -32,15 +33,16 @@
 
     tableMetadata *_metadata;
 
-    BOOL _cellEditing;
     NSMutableArray *_queueMetadatas;
     NSMutableArray *_selectedMetadatas;
     NSUInteger _numSelectedMetadatas;
     
-    NSDate *_dateReadDataSource;
     CCSectionDataSourceMetadata *_sectionDataSource;
     
     CCHud *_hud;
+    
+    TOScrollBar *_scrollBar;
+    NSMutableDictionary *_saveEtagForStartDirectory;
 }
 @end
 
@@ -85,13 +87,24 @@
 {
     [super viewDidLoad];
     
-    _queueMetadatas = [[NSMutableArray alloc] init];
-    _selectedMetadatas = [[NSMutableArray alloc] init];
+    _queueMetadatas = [NSMutableArray new];
+    _selectedMetadatas = [NSMutableArray new];
+    _saveEtagForStartDirectory = [NSMutableDictionary new];
     _hud = [[CCHud alloc] initWithView:[[[UIApplication sharedApplication] delegate] window]];
     
     // empty Data Source
     self.collectionView.emptyDataSetDelegate = self;
     self.collectionView.emptyDataSetSource = self;
+
+    // scroll bar
+    _scrollBar = [TOScrollBar new];
+    [self.collectionView to_addScrollBar:_scrollBar];
+    
+    _scrollBar.handleTintColor = [NCBrandColor sharedInstance].brand;
+    _scrollBar.handleWidth = 20;
+    _scrollBar.handleMinimiumHeight = 20;
+    _scrollBar.trackWidth = 0;
+    _scrollBar.edgeInset = 12;    
 }
 
 // Apparirà
@@ -106,8 +119,8 @@
     // Plus Button
     [appDelegate plusButtonVisibile:true];
 
-    
-    [self reloadDatasource];
+    if(!_isSearchMode && !_isEditMode)
+        [self reloadDatasourceFromSearch:NO];
 }
 
 - (void)viewSafeAreaInsetsDidChange
@@ -122,7 +135,10 @@
     if (self.isViewLoaded && self.view.window)
         [appDelegate changeTheming:self];
     
-    [self.collectionView reloadData];
+    _scrollBar.handleTintColor = [NCBrandColor sharedInstance].brand;
+    
+    if(!_isSearchMode && !_isEditMode)
+        [self.collectionView reloadData];
 }
 
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator
@@ -152,24 +168,40 @@
 - (void)setUINavigationBarDefault
 {
     [appDelegate aspectNavigationControllerBar:self.navigationController.navigationBar online:[appDelegate.reachability isReachable] hidden:NO];
-    
-    // select
-    UIImage *icon = [UIImage imageNamed:@"seleziona"];
-    UIBarButtonItem *buttonSelect = [[UIBarButtonItem alloc] initWithImage:icon style:UIBarButtonItemStylePlain target:self action:@selector(collectionSelectYES)];
-    
-    if ([_sectionDataSource.allRecordsDataSource count] > 0) {
-        
-        self.navigationItem.rightBarButtonItems = [[NSArray alloc] initWithObjects:buttonSelect, nil];
-        
-    } else {
-        
-        self.navigationItem.rightBarButtonItems = nil;
-    }
-    
-    self.navigationItem.leftBarButtonItem = nil;
+ 
+    // curront folder search
+    NSString *directory = [[NCManageDatabase sharedInstance] getAccountStartDirectoryPhotosTab:[CCUtility getHomeServerUrlActiveUrl:appDelegate.activeUrl]];
+    NSString *folder = [directory stringByReplacingOccurrencesOfString:[CCUtility getHomeServerUrlActiveUrl:appDelegate.activeUrl] withString:@""];
     
     // Title
-    self.navigationItem.title = NSLocalizedString(@"_photo_camera_", nil);
+    self.navigationItem.titleView = nil;
+    if (folder.length == 0) {
+        self.navigationItem.title = NSLocalizedString(@"_photo_camera_", nil);
+    } else {
+        self.navigationItem.title = [NSString stringWithFormat:@"%@: %@", NSLocalizedString(@"_photo_camera_", nil), [folder substringFromIndex:1]];
+    }
+    
+    if (_isSearchMode) {
+        [CCGraphics addImageToTitle:self.navigationItem.title colorTitle:[NCBrandColor sharedInstance].brandText imageTitle:[CCGraphics changeThemingColorImage:[UIImage imageNamed:@"loadingTitle"] color:[NCBrandColor sharedInstance].brandText] navigationItem:self.navigationItem];
+        [self.collectionView reloadData];
+        return;
+    }
+    
+    // Button Item
+    UIImage *icon;
+    icon = [UIImage imageNamed:@"seleziona"];
+    UIBarButtonItem *buttonSelect = [[UIBarButtonItem alloc] initWithImage:icon style:UIBarButtonItemStylePlain target:self action:@selector(editingModeYES)];
+    icon = [UIImage imageNamed:@"startDirectoryPhotosTab"];
+    UIBarButtonItem *buttonStartDirectoryPhotosTab = [[UIBarButtonItem alloc] initWithImage:icon style:UIBarButtonItemStylePlain target:self action:@selector(selectStartDirectoryPhotosTab)];
+
+    if ([_sectionDataSource.allRecordsDataSource count] > 0) {
+        self.navigationItem.rightBarButtonItems = [[NSArray alloc] initWithObjects:buttonSelect, nil];
+    } else {
+        self.navigationItem.rightBarButtonItems = nil;
+    }
+    self.navigationItem.leftBarButtonItems = [[NSArray alloc] initWithObjects:buttonStartDirectoryPhotosTab, nil];
+    
+    [self.collectionView reloadData];
 }
 
 - (void)setUINavigationBarSelected
@@ -182,30 +214,15 @@
     icon = [UIImage imageNamed:@"openSelectedFiles"];
     UIBarButtonItem *buttonOpenWith = [[UIBarButtonItem alloc] initWithImage:icon style:UIBarButtonItemStylePlain target:self action:@selector(openSelectedFiles)];
     
-    UIBarButtonItem *leftButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"_cancel_", nil) style:UIBarButtonItemStylePlain target:self action:@selector(reloadCollection)];
+    UIBarButtonItem *leftButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"_cancel_", nil) style:UIBarButtonItemStylePlain target:self action:@selector(editingModeNO)];
     
     self.navigationItem.leftBarButtonItem = leftButton;
     self.navigationItem.rightBarButtonItems = [[NSArray alloc] initWithObjects:buttonDelete, buttonOpenWith, nil];
     
     // Title
     self.navigationItem.title = [NSString stringWithFormat:@"%@ : %lu / %lu", NSLocalizedString(@"_selected_", nil), (unsigned long)[_selectedMetadatas count], (unsigned long)[_sectionDataSource.allRecordsDataSource count]];
-}
-
-- (void)collectionSelect:(BOOL)edit
-{
-    [self.collectionView setAllowsMultipleSelection:edit];
     
-    _cellEditing = edit;
-    
-    if (edit)
-        [self setUINavigationBarSelected];
-    else
-        [self setUINavigationBarDefault];
-}
-
-- (void)collectionSelectYES
-{
-    [self collectionSelect:YES];
+    [self.collectionView reloadData];
 }
 
 - (void)cellSelect:(BOOL)select indexPath:(NSIndexPath *)indexPath metadata:(tableMetadata *)metadata
@@ -255,6 +272,20 @@
     }
 }
 
+- (void)searchInProgress:(BOOL)search
+{
+    if (search) {
+        _isSearchMode = YES;
+        [self.navigationItem.leftBarButtonItems[0] setEnabled:NO];
+        [self.navigationItem.rightBarButtonItems[0] setEnabled:NO];
+    } else {
+        _isSearchMode = NO;
+        [self.navigationItem.leftBarButtonItems[0] setEnabled:YES];
+        [self.navigationItem.rightBarButtonItems[0] setEnabled:YES];
+    }
+    [self setUINavigationBarDefault];
+}
+
 #pragma --------------------------------------------------------------------------------------------
 #pragma mark ==== DZNEmptyDataSetSource Methods ====
 #pragma --------------------------------------------------------------------------------------------
@@ -271,13 +302,20 @@
 
 - (NSAttributedString *)titleForEmptyDataSet:(UIScrollView *)scrollView
 {
-    NSString *text = [NSString stringWithFormat:@"\n%@", NSLocalizedString(@"_tutorial_photo_view_", nil)];
+    NSString *text;
+    
+    if (_isSearchMode) {
+        text = [NSString stringWithFormat:@"\n%@", NSLocalizedString(@"_search_in_progress_", nil)];
+    } else {
+        text = [NSString stringWithFormat:@"\n%@", NSLocalizedString(@"_tutorial_photo_view_", nil)];
+    }
     
     NSDictionary *attributes = @{NSFontAttributeName:[UIFont boldSystemFontOfSize:20.0f], NSForegroundColorAttributeName:[UIColor lightGrayColor]};
     
     return [[NSAttributedString alloc] initWithString:text attributes:attributes];
 }
 
+/*
 - (NSAttributedString *)descriptionForEmptyDataSet:(UIScrollView *)scrollView
 {
     NSMutableParagraphStyle *paragraph = [NSMutableParagraphStyle new];
@@ -295,6 +333,7 @@
 
     return [[NSAttributedString alloc] initWithString:text attributes:attributes];
 }
+
 
 - (UIImage *)buttonImageForEmptyDataSet:(UIScrollView *)scrollView forState:(UIControlState)state
 {
@@ -317,6 +356,7 @@
     [navigationController setModalPresentationStyle:UIModalPresentationFullScreen];
     [self presentViewController:navigationController animated:YES completion:nil];
 }
+*/
 
 #pragma --------------------------------------------------------------------------------------------
 #pragma mark ===== openSelectedFiles =====
@@ -365,8 +405,7 @@
                 self.navigationItem.rightBarButtonItem.enabled = YES;
                 
                 if (completed) {
-                    
-                    [self performSelector:@selector(reloadCollection) withObject:nil];
+                    [self.collectionView reloadData];
                 }
             }];
         }];
@@ -414,12 +453,7 @@
 #pragma mark ===== Delete =====
 #pragma--------------------------------------------------------------------------------------------
 
-- (void)deleteFileOrFolderFailure:(CCMetadataNet *)metadataNet message:(NSString *)message errorCode:(NSInteger)errorCode
-{
-    [self deleteFileOrFolderSuccess:metadataNet];
-}
-
-- (void)deleteFileOrFolderSuccess:(CCMetadataNet *)metadataNet
+- (void)deleteFileOrFolderSuccessFailure:(CCMetadataNet *)metadataNet message:(NSString *)message errorCode:(NSInteger)errorCode
 {
     [_queueMetadatas removeObject:metadataNet.selector];
     
@@ -437,12 +471,12 @@
                 
             } else {
                 
-                [self reloadDatasourceForced];
+                [self reloadDatasourceFromSearch:NO];
             }
             
         } else {
             
-            [self reloadDatasourceForced];
+            [self reloadDatasourceFromSearch:NO];
         }
     }
 }
@@ -451,9 +485,7 @@
 {
     [_queueMetadatas addObject:selectorDelete];
     
-    [[CCActions sharedInstance] deleteFileOrFolder:metadata delegate:self];
-
-    [_hud visibleHudTitle:[NSString stringWithFormat:NSLocalizedString(@"_delete_file_n_", nil), ofFile - numFile + 1, ofFile] mode:MBProgressHUDModeIndeterminate color:nil];
+    [[CCActions sharedInstance] deleteFileOrFolder:metadata delegate:self hud:_hud hudTitled:[NSString stringWithFormat:NSLocalizedString(@"_delete_file_n_", nil), ofFile - numFile + 1, ofFile]];
 }
 
 - (void)deleteSelectedFiles
@@ -491,14 +523,21 @@
 #pragma mark ==== Download Thumbnail Delegate ====
 #pragma --------------------------------------------------------------------------------------------
 
-- (void)downloadThumbnailSuccess:(CCMetadataNet *)metadataNet
+- (void)downloadThumbnailSuccessFailure:(CCMetadataNet *)metadataNet message:(NSString *)message errorCode:(NSInteger)errorCode
 {
-    NSIndexPath *indexPath = [_sectionDataSource.fileIDIndexPath objectForKey:metadataNet.fileID];
+    // Check Active Account
+    if (![metadataNet.account isEqualToString:appDelegate.activeAccount])
+        return;
     
-    if ([self indexPathIsValid:indexPath]) {
-    
-        if ([[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithFormat:@"%@/%@.ico", appDelegate.directoryUser, metadataNet.fileID]])
-            [self.collectionView reloadItemsAtIndexPaths:@[indexPath]];
+    if (errorCode == 0) {
+        
+        NSIndexPath *indexPath = [_sectionDataSource.fileIDIndexPath objectForKey:metadataNet.fileID];
+        
+        if ([self indexPathIsValid:indexPath]) {
+        
+            if ([[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithFormat:@"%@/%@.ico", appDelegate.directoryUser, metadataNet.fileID]])
+                [self.collectionView reloadItemsAtIndexPaths:@[indexPath]];
+        }
     }
 }
 
@@ -509,50 +548,167 @@
 }
 
 #pragma --------------------------------------------------------------------------------------------
-#pragma mark ==== Collection ====
+#pragma mark ==== Change Start directory ====
 #pragma --------------------------------------------------------------------------------------------
 
-- (void)reloadDatasourceForced
+- (void)moveServerUrlTo:(NSString *)serverUrlTo title:(NSString *)title
 {
-    [CCSectionMetadata removeAllObjectsSectionDataSource:_sectionDataSource];
-    _dateReadDataSource = nil;
-    [self reloadDatasource];
+    NSString *oldStartDirectoryPhotosTab = [[NCManageDatabase sharedInstance] getAccountStartDirectoryPhotosTab:[CCUtility getHomeServerUrlActiveUrl:appDelegate.activeUrl]];
+    
+    if (![serverUrlTo isEqualToString:oldStartDirectoryPhotosTab]) {
+        
+        // Save Start Directory
+        [[NCManageDatabase sharedInstance] setAccountStartDirectoryPhotosTab:serverUrlTo];
+        
+        // search PhotoVideo with new start directory
+        [self searchPhotoVideo];
+    }
 }
 
-- (void)reloadDatasource
-{    
+- (void)selectStartDirectoryPhotosTab
+{
+    UINavigationController* navigationController = [[UIStoryboard storyboardWithName:@"CCMove" bundle:nil] instantiateViewControllerWithIdentifier:@"CCMove"];
+    
+    CCMove *viewController = (CCMove *)navigationController.topViewController;
+    
+    viewController.delegate = self;
+    viewController.move.title = NSLocalizedString(@"_select_dir_photos_tab_", nil);
+    viewController.tintColor = [NCBrandColor sharedInstance].brandText;
+    viewController.barTintColor = [NCBrandColor sharedInstance].brand;
+    viewController.tintColorTitle = [NCBrandColor sharedInstance].brandText;
+    viewController.networkingOperationQueue = appDelegate.netQueue;
+    viewController.hideCreateFolder = YES;
+    // E2EE
+    viewController.includeDirectoryE2EEncryption = NO;
+    
+    [navigationController setModalPresentationStyle:UIModalPresentationFormSheet];
+    [self presentViewController:navigationController animated:YES completion:nil];
+}
+
+#pragma --------------------------------------------------------------------------------------------
+#pragma mark ==== Search Photo/Video ====
+#pragma --------------------------------------------------------------------------------------------
+
+- (void)searchSuccessFailure:(CCMetadataNet *)metadataNet metadatas:(NSArray *)metadatas message:(NSString *)message errorCode:(NSInteger)errorCode
+{
+    // Check Active Account
+    if (![metadataNet.account isEqualToString:appDelegate.activeAccount]) {
+        [self searchInProgress:NO];
+        return;
+    }
+    
+    if (errorCode == 0) {
+    
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+            
+            NSString *startDirectory = [[NCManageDatabase sharedInstance] getAccountStartDirectoryPhotosTab:[CCUtility getHomeServerUrlActiveUrl:appDelegate.activeUrl]];
+
+            (void)[[NCManageDatabase sharedInstance] updateTableMetadatasContentTypeImageVideo:metadatas startDirectory:startDirectory activeUrl:appDelegate.activeUrl];
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self reloadDatasourceFromSearch:YES];
+            });
+            
+            // Update date
+            [[NCManageDatabase sharedInstance] setAccountDateSearchContentTypeImageVideo:[NSDate date]];
+            // Save etag
+            [_saveEtagForStartDirectory setObject:metadataNet.etag forKey:metadataNet.serverUrl];
+        });
+    
+    } else {
+        [self searchInProgress:NO];
+    }
+}
+
+- (void)searchPhotoVideo
+{
     // test
-    if (appDelegate.activeAccount.length == 0)
+    if (appDelegate.activeAccount.length == 0 || _isSearchMode || _isEditMode)
         return;
     
-    _directoryStartDatasource = [[NCManageDatabase sharedInstance] getAccountAutoUploadPath:appDelegate.activeUrl];
-    NSDate *dateDateRecordDirectory = nil;
+    // WAITING FOR d:creationdate
+    //
+    // tableAccount *account = [[NCManageDatabase sharedInstance] getAccountActive];
+    // account.dateSearchContentTypeImageVideo
     
-    NSArray *directories = [[NCManageDatabase sharedInstance] getTablesDirectoryWithPredicate:[NSPredicate predicateWithFormat:@"account = %@ AND serverUrl BEGINSWITH %@", appDelegate.activeAccount, _directoryStartDatasource] sorted:@"dateReadDirectory" ascending:false];
-    if ([directories count] > 0) {
-        tableDirectory *directory = [directories objectAtIndex:0];
-        dateDateRecordDirectory = directory.dateReadDirectory;
-    }
-    
-    if ([dateDateRecordDirectory compare:_dateReadDataSource] == NSOrderedDescending || dateDateRecordDirectory == nil || _dateReadDataSource == nil) {
+    NSString *startDirectory = [[NCManageDatabase sharedInstance] getAccountStartDirectoryPhotosTab:[CCUtility getHomeServerUrlActiveUrl:appDelegate.activeUrl]];
 
-        NSLog(@"[LOG] Photos rebuild Data Source serverUrl : %@", _directoryStartDatasource);
-
-        _dateReadDataSource = [NSDate date];
-        NSArray *results = [[NCManageDatabase sharedInstance] getTableMetadatasPhotosWithServerUrl:_directoryStartDatasource];
-        _sectionDataSource = [CCSectionMetadata creataDataSourseSectionMetadata:results listProgressMetadata:nil e2eEncryptions:nil groupByField:@"date" activeAccount:appDelegate.activeAccount];
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
         
-        [self reloadCollection];
-    }
+        NSArray *items;
+        NSError *error = [[NCNetworkingSync sharedManager] readFile:startDirectory user:appDelegate.activeUser userID:appDelegate.activeUserID password:appDelegate.activePassword items:&items];
+        
+        if (error == nil && items.count > 0) {
+        
+            OCFileDto *fileStartDirectory = items[0];
+            
+            if (![fileStartDirectory.etag isEqualToString:[_saveEtagForStartDirectory objectForKey:startDirectory]]) {
+                
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [[CCActions sharedInstance] search:startDirectory fileName:@"" etag:fileStartDirectory.etag depth:@"infinity" date:[NSDate distantPast] contenType:@[@"image/%", @"video/%"] selector:selectorSearchContentType delegate:self];
+                    [self searchInProgress:YES];
+                    [self editingModeNO];
+                });
+            } else {
+                [self reloadDatasourceFromSearch:YES];
+            }
+        } else {
+            [self reloadDatasourceFromSearch:YES];
+        }
+    });
 }
 
-- (void)reloadCollection
+#pragma --------------------------------------------------------------------------------------------
+#pragma mark ==== Datasource ====
+#pragma --------------------------------------------------------------------------------------------
+
+- (void)reloadDatasourceFromSearch:(BOOL)fromSearch
 {
-    [self.collectionView reloadData];
+    @synchronized(self) {
+        // test
+        if (appDelegate.activeAccount.length == 0) {
+            [self searchInProgress:NO];
+            return;
+        }
+    
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+
+            NSString *startDirectory = [[NCManageDatabase sharedInstance] getAccountStartDirectoryPhotosTab:[CCUtility getHomeServerUrlActiveUrl:appDelegate.activeUrl]];
+            NSArray *metadatasDBImageVideo = [[NCManageDatabase sharedInstance] getTableMetadatasContentTypeImageVideo:startDirectory activeUrl:appDelegate.activeUrl];
+            CCSectionDataSourceMetadata *tempSectionDataSource = [CCSectionMetadata creataDataSourseSectionMetadata:metadatasDBImageVideo listProgressMetadata:nil groupByField:@"date" activeAccount:appDelegate.activeAccount];
         
-    [_selectedMetadatas removeAllObjects];
-    [self collectionSelect:NO];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                // OPTIMIZED
+                if (tempSectionDataSource.totalSize != _sectionDataSource.totalSize || tempSectionDataSource.files != _sectionDataSource.files) {
+                    _sectionDataSource = [tempSectionDataSource copy];
+                    [self.collectionView reloadData];
+                }
+                if (fromSearch) {
+                    [self searchInProgress:NO];
+                }
+            });
+        });
+    }
 }
+
+- (void)editingModeYES
+{
+    [self.collectionView setAllowsMultipleSelection:true];
+    _isEditMode = true;
+    [self setUINavigationBarSelected];
+}
+
+- (void)editingModeNO
+{
+    [self.collectionView setAllowsMultipleSelection:false];
+    _isEditMode = false;
+    [_selectedMetadatas removeAllObjects];
+    [self setUINavigationBarDefault];
+}
+
+#pragma --------------------------------------------------------------------------------------------
+#pragma mark ==== Collection ====
+#pragma --------------------------------------------------------------------------------------------
 
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView
 {    
@@ -594,7 +750,8 @@
         
         UILabel *titleLabel = (UILabel *)[headerView viewWithTag:100];
         titleLabel.textColor = [UIColor blackColor];
-        titleLabel.text = [CCUtility getTitleSectionDate:[_sectionDataSource.sections objectAtIndex:indexPath.section]];
+        if (_sectionDataSource.sections.count > indexPath.section)
+            titleLabel.text = [CCUtility getTitleSectionDate:[_sectionDataSource.sections objectAtIndex:indexPath.section]];
 
         return headerView;
     }
@@ -637,11 +794,20 @@
         
         } else {
         
+            tableDirectory *directory = [[NCManageDatabase sharedInstance] getTableDirectoryWithPredicate:[NSPredicate predicateWithFormat:@"account = %@ AND directoryID = %@", appDelegate.activeAccount, metadata.directoryID]];
+
             // Thumbnail not present
-            imageView.image = [UIImage imageNamed:@"file_photo"];
-        
-            if (metadata.thumbnailExists)
-                [[CCActions sharedInstance] downloadTumbnail:metadata delegate:self];
+            if (directory.e2eEncrypted) {
+                
+                imageView.image = [UIImage imageNamed:@"file_photo_encrypted"];
+                
+            } else {
+                
+                imageView.image = [UIImage imageNamed:@"file_photo"];
+
+                if (metadata.thumbnailExists)
+                    [[CCActions sharedInstance] downloadTumbnail:metadata delegate:self];
+            }
         }
     
         // Cheched
@@ -667,7 +833,7 @@
         NSString *fileID = [metadatasForKey objectAtIndex:indexPath.row];
         _metadata = [_sectionDataSource.allRecordsDataSource objectForKey:fileID];
         
-        if (_cellEditing) {
+        if (_isEditMode) {
         
             [self cellSelect:YES indexPath:indexPath metadata:_metadata];
         
@@ -681,9 +847,10 @@
 
 - (void)collectionView:(UICollectionView *)collectionView didDeselectItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (_cellEditing == NO)
+    // test
+    if (_isEditMode == NO)
         return;
-    
+   
     NSArray *metadatasForKey = [_sectionDataSource.sectionArrayRow objectForKey:[_sectionDataSource.sections objectAtIndex:indexPath.section]];
     
     if ([metadatasForKey count] > indexPath.row) {

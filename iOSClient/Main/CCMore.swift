@@ -110,26 +110,29 @@ class CCMore: UIViewController, UITableViewDelegate, UITableViewDataSource, CCLo
         
         if NCBrandOptions.sharedInstance.disable_more_external_site == false {
         
-            menuExternalSite = NCManageDatabase.sharedInstance.getAllExternalSites(predicate: NSPredicate(format: "(account == '\(appDelegate.activeAccount!)')"))
-        
-            for table in menuExternalSite! {
+            menuExternalSite = NCManageDatabase.sharedInstance.getAllExternalSites()
             
-                item = OCExternalSites.init()
+            if menuExternalSite != nil {
+                
+                for table in menuExternalSite! {
             
-                item.name = table.name
-                item.url = table.url
-                item.icon = table.icon
+                    item = OCExternalSites.init()
             
-                if (table.type == "link") {
-                    item.icon = "moreExternalSite"
-                    functionMenu.append(item)
-                }
-                if (table.type == "settings") {
-                    item.icon = "moreSettingsExternalSite"
-                    settingsMenu.append(item)
-                }
-                if (table.type == "quota") {
-                    quotaMenu.append(item)
+                    item.name = table.name
+                    item.url = table.url
+                    item.icon = table.icon
+            
+                    if (table.type == "link") {
+                        item.icon = "moreExternalSite"
+                        functionMenu.append(item)
+                    }
+                    if (table.type == "settings") {
+                        item.icon = "moreSettingsExternalSite"
+                        settingsMenu.append(item)
+                    }
+                    if (table.type == "quota") {
+                        quotaMenu.append(item)
+                    }
                 }
             }
         }
@@ -206,6 +209,15 @@ class CCMore: UIViewController, UITableViewDelegate, UITableViewDataSource, CCLo
         else{
             labelUsername.text = tabAccount.displayName
         }
+        
+        // Shadow labelUsername TEST BLUR
+        /*
+        labelUsername.layer.shadowColor = UIColor.black.cgColor
+        labelUsername.layer.shadowRadius = 4
+        labelUsername.layer.shadowOpacity = 0.8
+        labelUsername.layer.shadowOffset = CGSize(width: 0, height: 0)
+        labelUsername.layer.masksToBounds = false
+        */
         
         if (tabAccount.quotaRelative > 0) {
             progressQuota.progress = Float(tabAccount.quotaRelative) / 100
@@ -392,8 +404,12 @@ class CCMore: UIViewController, UITableViewDelegate, UITableViewDataSource, CCLo
         appDelegate.selectedTabBarController(Int(k_tabBarApplicationIndexFile))
     }
     
-    func loginDisappear() {
-        
+    func loginClose() {
+        appDelegate.activeLogin = nil
+    }
+    
+    func loginWebClose() {
+        appDelegate.activeLoginWeb = nil
     }
 }
 
@@ -408,7 +424,7 @@ extension CCMore: SwiftModalWebVCDelegate, SwiftWebVCDelegate{
         let urlString: String = url.absoluteString.lowercased()
         
         // Protocol close webVC
-        if (urlString.contains(NCBrandOptions.sharedInstance.webCloseViewProtocol) == true) {
+        if (urlString.contains(NCBrandOptions.sharedInstance.webCloseViewProtocolPersonalized) == true) {
             
             if (self.presentingViewController != nil) {
                 self.dismiss(animated: true, completion: nil)
@@ -424,6 +440,10 @@ extension CCMore: SwiftModalWebVCDelegate, SwiftWebVCDelegate{
     
     public func didFinishLoading(success: Bool, url: URL) {
         print("Finished loading. Success: \(success).")
+    }
+    
+    public func decidePolicyForNavigationAction(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        decisionHandler(.allow)
     }
 }
 

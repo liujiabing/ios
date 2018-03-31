@@ -123,10 +123,10 @@
 		F7169A1C1EE590930086BD69 /* NCShares.m in Sources */ = {isa = PBXBuildFile; fileRef = F7169A181EE590930086BD69 /* NCShares.m */; };
 		F7169A1D1EE590930086BD69 /* NCSharesCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F7169A1A1EE590930086BD69 /* NCSharesCell.m */; };
 		F7169A1E1EE590930086BD69 /* NCSharesCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F7169A1B1EE590930086BD69 /* NCSharesCell.xib */; };
-		F717F0001F96661400A324A5 /* NCEntoToEndInterface.swift in Sources */ = {isa = PBXBuildFile; fileRef = F717EFFF1F96661400A324A5 /* NCEntoToEndInterface.swift */; };
 		F720E01F1E48C73E001A4B9E /* CCActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F720E01E1E48C73E001A4B9E /* CCActions.swift */; };
 		F7226EDC1EE4089300EBECB1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F7226EDB1EE4089300EBECB1 /* Main.storyboard */; };
 		F725437C1E12A44A009BF4C2 /* CCSection.m in Sources */ = {isa = PBXBuildFile; fileRef = F78F6FAF1CC8CCB700F4EA25 /* CCSection.m */; };
+		F726EEEC1FED1C820030B9C8 /* NCEndToEndInitialize.swift in Sources */ = {isa = PBXBuildFile; fileRef = F726EEEB1FED1C820030B9C8 /* NCEndToEndInitialize.swift */; };
 		F72AAECA1E5C60C700BB17E1 /* AHKActionSheet.m in Sources */ = {isa = PBXBuildFile; fileRef = F72AAEC31E5C60C700BB17E1 /* AHKActionSheet.m */; };
 		F72AAECB1E5C60C700BB17E1 /* AHKActionSheetViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F72AAEC51E5C60C700BB17E1 /* AHKActionSheetViewController.m */; };
 		F732B3371E8045A1002B7D75 /* SwiftWebVC.strings in Resources */ = {isa = PBXBuildFile; fileRef = F732B3351E8045A1002B7D75 /* SwiftWebVC.strings */; };
@@ -233,6 +233,7 @@
 		F75131641FA5EFF4002BB4D1 /* NCNetworkingSync.m in Sources */ = {isa = PBXBuildFile; fileRef = F75131621FA5EFF4002BB4D1 /* NCNetworkingSync.m */; };
 		F75131651FA5EFF4002BB4D1 /* NCNetworkingSync.m in Sources */ = {isa = PBXBuildFile; fileRef = F75131621FA5EFF4002BB4D1 /* NCNetworkingSync.m */; };
 		F75131661FA5EFF4002BB4D1 /* NCNetworkingSync.m in Sources */ = {isa = PBXBuildFile; fileRef = F75131621FA5EFF4002BB4D1 /* NCNetworkingSync.m */; };
+		F755BD9B20594AC7008C5FBB /* NCService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F755BD9A20594AC7008C5FBB /* NCService.swift */; };
 		F75797AE1E81356C00187A1B /* CTAssetsPicker.strings in Resources */ = {isa = PBXBuildFile; fileRef = F75797AC1E81356C00187A1B /* CTAssetsPicker.strings */; };
 		F75AC2431F1F62450073EC19 /* NCManageAutoUploadFileName.swift in Sources */ = {isa = PBXBuildFile; fileRef = F75AC2421F1F62450073EC19 /* NCManageAutoUploadFileName.swift */; };
 		F75ADF451DC75FFE008A7347 /* CCLogin.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F75ADF441DC75FFE008A7347 /* CCLogin.storyboard */; };
@@ -375,6 +376,9 @@
 		F7A321AD1E9E6AD50069AD1B /* CCAdvanced.m in Sources */ = {isa = PBXBuildFile; fileRef = F7A321AC1E9E6AD50069AD1B /* CCAdvanced.m */; };
 		F7A377161EB2364A002856D3 /* Crashlytics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7A377141EB2364A002856D3 /* Crashlytics.framework */; };
 		F7A3771A1EB2364A002856D3 /* Fabric.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7A377151EB2364A002856D3 /* Fabric.framework */; };
+		F7A5541E204EF8AF008468EC /* TOScrollBarGestureRecognizer.m in Sources */ = {isa = PBXBuildFile; fileRef = F7A55418204EF8AF008468EC /* TOScrollBarGestureRecognizer.m */; };
+		F7A5541F204EF8AF008468EC /* TOScrollBar.m in Sources */ = {isa = PBXBuildFile; fileRef = F7A5541B204EF8AF008468EC /* TOScrollBar.m */; };
+		F7A55420204EF8AF008468EC /* UIScrollView+TOScrollBar.m in Sources */ = {isa = PBXBuildFile; fileRef = F7A5541D204EF8AF008468EC /* UIScrollView+TOScrollBar.m */; };
 		F7B0C0CD1EE7E7750033AC24 /* CCSynchronize.m in Sources */ = {isa = PBXBuildFile; fileRef = F7B0C0CC1EE7E7750033AC24 /* CCSynchronize.m */; };
 		F7B0C1751EE839A30033AC24 /* NCAutoUpload.m in Sources */ = {isa = PBXBuildFile; fileRef = F7B0C1741EE839A30033AC24 /* NCAutoUpload.m */; };
 		F7B1FBC41E72E3D1001781FE /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F7B1FBB11E72E3D1001781FE /* Media.xcassets */; };
@@ -743,6 +747,13 @@
 		F7053E3C1C639DF500741EA5 /* CCUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCUtility.h; sourceTree = "<group>"; };
 		F7053E3D1C639DF500741EA5 /* CCUtility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCUtility.m; sourceTree = "<group>"; };
 		F70944BC1F86364000AE4541 /* MainInterface.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = MainInterface.storyboard; sourceTree = "<group>"; };
+		F70A07C5205285FA00DC1231 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/CTAssetsPicker.strings"; sourceTree = "<group>"; };
+		F70A07C6205285FB00DC1231 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/SwiftWebVC.strings"; sourceTree = "<group>"; };
+		F70A07C7205285FB00DC1231 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/BKPasscodeView.strings"; sourceTree = "<group>"; };
+		F70A07C8205285FB00DC1231 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		F70A07C9205285FB00DC1231 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		F70A07CA205285FB00DC1231 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Intro.strings"; sourceTree = "<group>"; };
+		F70A07CB205285FB00DC1231 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Error.strings"; sourceTree = "<group>"; };
 		F70A63061D5B3467004E2AA5 /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libcrypto.a; sourceTree = "<group>"; };
 		F70A63071D5B3467004E2AA5 /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libssl.a; sourceTree = "<group>"; };
 		F70CAE381F8CF31A008125FD /* NCEndToEndEncryption.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NCEndToEndEncryption.h; sourceTree = "<group>"; };
@@ -782,10 +793,10 @@
 		F7169A4D1EE59C640086BD69 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		F7169A4E1EE59C640086BD69 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/Intro.strings; sourceTree = "<group>"; };
 		F7169A4F1EE59C640086BD69 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/Error.strings; sourceTree = "<group>"; };
-		F717EFFF1F96661400A324A5 /* NCEntoToEndInterface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NCEntoToEndInterface.swift; sourceTree = "<group>"; };
 		F720E01E1E48C73E001A4B9E /* CCActions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; name = CCActions.swift; path = Actions/CCActions.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		F7226EDB1EE4089300EBECB1 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
 		F7229B491DF71BB300E8C4E7 /* AUTHORS */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = AUTHORS; sourceTree = SOURCE_ROOT; };
+		F726EEEB1FED1C820030B9C8 /* NCEndToEndInitialize.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NCEndToEndInitialize.swift; sourceTree = "<group>"; };
 		F7296A661C8880ED001A7809 /* CCloadItemData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CCloadItemData.swift; sourceTree = "<group>"; };
 		F72AAEC21E5C60C700BB17E1 /* AHKActionSheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AHKActionSheet.h; sourceTree = "<group>"; };
 		F72AAEC31E5C60C700BB17E1 /* AHKActionSheet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AHKActionSheet.m; sourceTree = "<group>"; };
@@ -793,6 +804,20 @@
 		F72AAEC51E5C60C700BB17E1 /* AHKActionSheetViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AHKActionSheetViewController.m; sourceTree = "<group>"; };
 		F73049B81CB567F000C7C320 /* NSString+TruncateToWidth.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+TruncateToWidth.h"; sourceTree = "<group>"; };
 		F73049B91CB567F000C7C320 /* NSString+TruncateToWidth.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+TruncateToWidth.m"; sourceTree = "<group>"; };
+		F7320931201B812F008A0888 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/CTAssetsPicker.strings; sourceTree = "<group>"; };
+		F7320932201B812F008A0888 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/SwiftWebVC.strings; sourceTree = "<group>"; };
+		F7320933201B812F008A0888 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/BKPasscodeView.strings; sourceTree = "<group>"; };
+		F7320934201B812F008A0888 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F7320935201B8130008A0888 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		F7320936201B8130008A0888 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/Intro.strings; sourceTree = "<group>"; };
+		F7320937201B8130008A0888 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/Error.strings; sourceTree = "<group>"; };
+		F7320938201B81E4008A0888 /* es-419 */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "es-419"; path = "es-419.lproj/CTAssetsPicker.strings"; sourceTree = "<group>"; };
+		F7320939201B81E4008A0888 /* es-419 */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "es-419"; path = "es-419.lproj/SwiftWebVC.strings"; sourceTree = "<group>"; };
+		F732093A201B81E4008A0888 /* es-419 */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "es-419"; path = "es-419.lproj/BKPasscodeView.strings"; sourceTree = "<group>"; };
+		F732093B201B81E4008A0888 /* es-419 */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "es-419"; path = "es-419.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		F732093C201B81E4008A0888 /* es-419 */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "es-419"; path = "es-419.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		F732093D201B81E5008A0888 /* es-419 */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "es-419"; path = "es-419.lproj/Intro.strings"; sourceTree = "<group>"; };
+		F732093E201B81E5008A0888 /* es-419 */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "es-419"; path = "es-419.lproj/Error.strings"; sourceTree = "<group>"; };
 		F732B3361E8045A1002B7D75 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/SwiftWebVC.strings; sourceTree = "<group>"; };
 		F732BA031D76CE1500E9878B /* CCNetworking.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCNetworking.h; sourceTree = "<group>"; };
 		F732BA041D76CE1500E9878B /* CCNetworking.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCNetworking.m; sourceTree = "<group>"; };
@@ -894,13 +919,6 @@
 		F74344911E128E96001CC831 /* PickerFileProvider.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PickerFileProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F743B2C31C95BBE8006F5B4A /* CCShareInfoCMOC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCShareInfoCMOC.h; sourceTree = "<group>"; };
 		F743B2C41C95BBE8006F5B4A /* CCShareInfoCMOC.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCShareInfoCMOC.m; sourceTree = "<group>"; };
-		F74C5D901F923E4700B7CC01 /* fi-FI */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "fi-FI"; path = "fi-FI.lproj/CTAssetsPicker.strings"; sourceTree = "<group>"; };
-		F74C5D911F923E4700B7CC01 /* fi-FI */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "fi-FI"; path = "fi-FI.lproj/SwiftWebVC.strings"; sourceTree = "<group>"; };
-		F74C5D921F923E4700B7CC01 /* fi-FI */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "fi-FI"; path = "fi-FI.lproj/BKPasscodeView.strings"; sourceTree = "<group>"; };
-		F74C5D931F923E4700B7CC01 /* fi-FI */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "fi-FI"; path = "fi-FI.lproj/Localizable.strings"; sourceTree = "<group>"; };
-		F74C5D941F923E4800B7CC01 /* fi-FI */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "fi-FI"; path = "fi-FI.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
-		F74C5D951F923E4800B7CC01 /* fi-FI */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "fi-FI"; path = "fi-FI.lproj/Intro.strings"; sourceTree = "<group>"; };
-		F74C5D961F923E4800B7CC01 /* fi-FI */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "fi-FI"; path = "fi-FI.lproj/Error.strings"; sourceTree = "<group>"; };
 		F74D3DBD1BAC1941000BAE4B /* OCNetworking.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OCNetworking.h; sourceTree = "<group>"; };
 		F74D3DBE1BAC1941000BAE4B /* OCNetworking.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OCNetworking.m; sourceTree = "<group>"; };
 		F75037431DBFA91A008FB480 /* ALView+PureLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "ALView+PureLayout.h"; sourceTree = "<group>"; };
@@ -984,7 +1002,7 @@
 		F7540F2A1D5B238600C3FFA8 /* x509.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = x509.h; sourceTree = "<group>"; };
 		F7540F2B1D5B238600C3FFA8 /* x509_vfy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = x509_vfy.h; sourceTree = "<group>"; };
 		F7540F2C1D5B238600C3FFA8 /* x509v3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = x509v3.h; sourceTree = "<group>"; };
-		F755D43C1FC44E7B00801AE4 /* CustomSwift.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CustomSwift.h; sourceTree = "<group>"; };
+		F755BD9A20594AC7008C5FBB /* NCService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NCService.swift; sourceTree = "<group>"; };
 		F75797AD1E81356C00187A1B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/CTAssetsPicker.strings; sourceTree = "<group>"; };
 		F75AC2421F1F62450073EC19 /* NCManageAutoUploadFileName.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NCManageAutoUploadFileName.swift; sourceTree = "<group>"; };
 		F75ADF441DC75FFE008A7347 /* CCLogin.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = CCLogin.storyboard; sourceTree = "<group>"; };
@@ -1323,6 +1341,12 @@
 		F7A377151EB2364A002856D3 /* Fabric.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Fabric.framework; sourceTree = "<group>"; };
 		F7A54C341C6267B500E2C8BF /* CCExifGeo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCExifGeo.h; sourceTree = "<group>"; };
 		F7A54C351C6267B500E2C8BF /* CCExifGeo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCExifGeo.m; sourceTree = "<group>"; };
+		F7A55418204EF8AF008468EC /* TOScrollBarGestureRecognizer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TOScrollBarGestureRecognizer.m; sourceTree = "<group>"; };
+		F7A55419204EF8AF008468EC /* TOScrollBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOScrollBar.h; sourceTree = "<group>"; };
+		F7A5541A204EF8AF008468EC /* UIScrollView+TOScrollBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIScrollView+TOScrollBar.h"; sourceTree = "<group>"; };
+		F7A5541B204EF8AF008468EC /* TOScrollBar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TOScrollBar.m; sourceTree = "<group>"; };
+		F7A5541C204EF8AF008468EC /* TOScrollBarGestureRecognizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOScrollBarGestureRecognizer.h; sourceTree = "<group>"; };
+		F7A5541D204EF8AF008468EC /* UIScrollView+TOScrollBar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIScrollView+TOScrollBar.m"; sourceTree = "<group>"; };
 		F7A582D61A24DAB500E903D7 /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = AppDelegate.m; sourceTree = "<group>"; };
 		F7A582D71A24DAB500E903D7 /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = AppDelegate.h; sourceTree = "<group>"; };
 		F7ACE4291BAC0268006C0017 /* Acknowledgements.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Acknowledgements.h; sourceTree = "<group>"; };
@@ -1868,6 +1892,7 @@
 				F75037421DBFA91A008FB480 /* PureLayout */,
 				F70F05241C889184008DAB36 /* Reachability */,
 				F7DFE24E1EBDC3A400CF5202 /* Realm */,
+				F7A55417204EF8AF008468EC /* TOScrollBar */,
 				F75AE3C51E9D12900088BB09 /* SwiftyAvatar */,
 				F73CCE271DC13798007E38D8 /* UICKeyChainStore */,
 				F70F05561C889184008DAB36 /* UIImage+animatedGIF */,
@@ -2134,6 +2159,7 @@
 		F74D3DB81BAC1941000BAE4B /* Networking */ = {
 			isa = PBXGroup;
 			children = (
+				F755BD9A20594AC7008C5FBB /* NCService.swift */,
 				F732BA031D76CE1500E9878B /* CCNetworking.h */,
 				F732BA041D76CE1500E9878B /* CCNetworking.m */,
 				F74D3DBD1BAC1941000BAE4B /* OCNetworking.h */,
@@ -2539,6 +2565,19 @@
 			path = "Libraries external/Fabric";
 			sourceTree = SOURCE_ROOT;
 		};
+		F7A55417204EF8AF008468EC /* TOScrollBar */ = {
+			isa = PBXGroup;
+			children = (
+				F7A55419204EF8AF008468EC /* TOScrollBar.h */,
+				F7A5541B204EF8AF008468EC /* TOScrollBar.m */,
+				F7A5541C204EF8AF008468EC /* TOScrollBarGestureRecognizer.h */,
+				F7A55418204EF8AF008468EC /* TOScrollBarGestureRecognizer.m */,
+				F7A5541A204EF8AF008468EC /* UIScrollView+TOScrollBar.h */,
+				F7A5541D204EF8AF008468EC /* UIScrollView+TOScrollBar.m */,
+			);
+			path = TOScrollBar;
+			sourceTree = "<group>";
+		};
 		F7ACE4281BAC0268006C0017 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
@@ -2549,11 +2588,12 @@
 				F7A321AC1E9E6AD50069AD1B /* CCAdvanced.m */,
 				F7ACE42C1BAC0268006C0017 /* CCManageAccount.h */,
 				F7ACE42D1BAC0268006C0017 /* CCManageAccount.m */,
+				F75AC2421F1F62450073EC19 /* NCManageAutoUploadFileName.swift */,
 				F7ACE42E1BAC0268006C0017 /* CCManageAutoUpload.h */,
 				F7ACE42F1BAC0268006C0017 /* CCManageAutoUpload.m */,
 				F7ACE4301BAC0268006C0017 /* CCSettings.h */,
 				F7ACE4311BAC0268006C0017 /* CCSettings.m */,
-				F75AC2421F1F62450073EC19 /* NCManageAutoUploadFileName.swift */,
+				F726EEEB1FED1C820030B9C8 /* NCEndToEndInitialize.swift */,
 				F738E8401F90FFD100F95C8E /* NCManageEndToEndEncryption.h */,
 				F738E8411F90FFD100F95C8E /* NCManageEndToEndEncryption.m */,
 			);
@@ -2710,7 +2750,6 @@
 				F710E80C1EF95C9C00DC2427 /* Intro */,
 				F700222B1EC479840080073F /* Custom.xcassets */,
 				F73CB5771ED46807005F2A5A /* NCBridgeSwift.h */,
-				F755D43C1FC44E7B00801AE4 /* CustomSwift.h */,
 				F76B3CCD1EAE01BD00921AC9 /* NCBrand.swift */,
 				F76F23331ED4603700C40023 /* LaunchScreen.xib */,
 			);
@@ -3143,7 +3182,6 @@
 				F7FE125D1BAC03FB0041924B /* CCBKPasscode.m */,
 				F7F801001D98205A007537BC /* CCCertificate.h */,
 				F7F801011D98205A007537BC /* CCCertificate.m */,
-				F717EFFF1F96661400A324A5 /* NCEntoToEndInterface.swift */,
 				F7F878AD1FB9E3B900599E4F /* NCEndToEndMetadata.swift */,
 				F70CAE381F8CF31A008125FD /* NCEndToEndEncryption.h */,
 				F70CAE391F8CF31A008125FD /* NCEndToEndEncryption.m */,
@@ -3315,7 +3353,6 @@
 				"sk-SK",
 				"en-GB",
 				"zh-Hans",
-				"fi-FI",
 				"ka-GE",
 				hu,
 				"zh-Hant-TW",
@@ -3335,6 +3372,9 @@
 				"es-SV",
 				"es-UY",
 				"cs-CZ",
+				ko,
+				"es-419",
+				"pt-PT",
 			);
 			mainGroup = F7F67B9F1A24D27800EE80DA;
 			productRefGroup = F7F67B9F1A24D27800EE80DA;
@@ -3793,6 +3833,7 @@
 				F7D4238A1F0596C6009C9782 /* ThumbsMainToolbar.m in Sources */,
 				F70022EC1EC4C9100080073F /* OCXMLSharedParser.m in Sources */,
 				F7F54D061E5B14C800E19C62 /* MWCaptionView.m in Sources */,
+				F7A55420204EF8AF008468EC /* UIScrollView+TOScrollBar.m in Sources */,
 				F762CB001EACB66200B38484 /* XLFormSegmentedCell.m in Sources */,
 				F732BA061D76CE1500E9878B /* CCNetworking.m in Sources */,
 				F70022B01EC4C9100080073F /* AFURLSessionManager.m in Sources */,
@@ -3808,6 +3849,7 @@
 				F7F54D0C1E5B14C800E19C62 /* MWTapDetectingView.m in Sources */,
 				F7D424631F063B82009C9782 /* CTAssetSelectionLabel.m in Sources */,
 				F7B1FBC61E72E3D1001781FE /* SwiftModalWebVC.swift in Sources */,
+				F7A5541F204EF8AF008468EC /* TOScrollBar.m in Sources */,
 				F7A321651E9E37960069AD1B /* CCActivity.m in Sources */,
 				F762CB0C1EACB66200B38484 /* XLFormSectionDescriptor.m in Sources */,
 				F77B0E131D118A16002130FE /* AppDelegate.m in Sources */,
@@ -3879,8 +3921,8 @@
 				F7FCFFE01D707B83000E6E29 /* CCPeekPop.m in Sources */,
 				F7BAADC81ED5A87C00B7EAD4 /* NCDatabase.swift in Sources */,
 				F77B0E541D118A16002130FE /* CCMove.m in Sources */,
+				F7A5541E204EF8AF008468EC /* TOScrollBarGestureRecognizer.m in Sources */,
 				F70022E61EC4C9100080073F /* OCXMLServerErrorsParser.m in Sources */,
-				F717F0001F96661400A324A5 /* NCEntoToEndInterface.swift in Sources */,
 				F762CB171EACB66200B38484 /* XLFormRegexValidator.m in Sources */,
 				F73CC0691E813DFF006E3047 /* BKPasscodeDummyViewController.m in Sources */,
 				F762CB1A1EACB66200B38484 /* XLForm.m in Sources */,
@@ -3945,6 +3987,7 @@
 				F77B0E981D118A16002130FE /* CCManageAccount.m in Sources */,
 				F75131631FA5EFF4002BB4D1 /* NCNetworkingSync.m in Sources */,
 				F762CB011EACB66200B38484 /* XLFormSelectorCell.m in Sources */,
+				F755BD9B20594AC7008C5FBB /* NCService.swift in Sources */,
 				F70022AD1EC4C9100080073F /* AFURLResponseSerialization.m in Sources */,
 				F7D424531F063B82009C9782 /* NSBundle+CTAssetsPickerController.m in Sources */,
 				F77B0E9B1D118A16002130FE /* CCBKPasscode.m in Sources */,
@@ -3973,6 +4016,7 @@
 				F762CB0A1EACB66200B38484 /* XLFormDescriptor.m in Sources */,
 				F7D4238C1F0596C6009C9782 /* UIXToolbarView.m in Sources */,
 				F7A321791E9E3EAF0069AD1B /* CCTransfers.m in Sources */,
+				F726EEEC1FED1C820030B9C8 /* NCEndToEndInitialize.swift in Sources */,
 				F70CAE3A1F8CF31A008125FD /* NCEndToEndEncryption.m in Sources */,
 				F73B4F0C1F470D9100BBEE4B /* nsHebrewProber.cpp in Sources */,
 				F762CAFB1EACB66200B38484 /* XLFormDatePickerCell.m in Sources */,
@@ -4071,7 +4115,6 @@
 				F7D532531F5D4155006568B1 /* sk-SK */,
 				F7D5328E1F5D443B006568B1 /* en-GB */,
 				F7D532A31F5D4461006568B1 /* zh-Hans */,
-				F74C5D921F923E4700B7CC01 /* fi-FI */,
 				F77438EA1FCD694900662C46 /* ka-GE */,
 				F77438F11FCD69D200662C46 /* hu */,
 				F77438F81FCD6A0D00662C46 /* zh-Hant-TW */,
@@ -4091,6 +4134,9 @@
 				F774395A1FCD6D8200662C46 /* es-SV */,
 				F77439611FCD6D9C00662C46 /* es-UY */,
 				F7BB04841FD58ACB00BBFD2A /* cs-CZ */,
+				F7320933201B812F008A0888 /* ko */,
+				F732093A201B81E4008A0888 /* es-419 */,
+				F70A07C7205285FB00DC1231 /* pt-PT */,
 			);
 			name = BKPasscodeView.strings;
 			path = "Supporting Files";
@@ -4116,7 +4162,6 @@
 				F7D532521F5D4155006568B1 /* sk-SK */,
 				F7D5328D1F5D443B006568B1 /* en-GB */,
 				F7D532A21F5D4461006568B1 /* zh-Hans */,
-				F74C5D911F923E4700B7CC01 /* fi-FI */,
 				F77438E91FCD694900662C46 /* ka-GE */,
 				F77438F01FCD69D200662C46 /* hu */,
 				F77438F71FCD6A0D00662C46 /* zh-Hant-TW */,
@@ -4136,6 +4181,9 @@
 				F77439591FCD6D8100662C46 /* es-SV */,
 				F77439601FCD6D9C00662C46 /* es-UY */,
 				F7BB04831FD58ACA00BBFD2A /* cs-CZ */,
+				F7320932201B812F008A0888 /* ko */,
+				F7320939201B81E4008A0888 /* es-419 */,
+				F70A07C6205285FB00DC1231 /* pt-PT */,
 			);
 			name = SwiftWebVC.strings;
 			path = "Supporting Files";
@@ -4161,7 +4209,6 @@
 				F7D532561F5D4155006568B1 /* sk-SK */,
 				F7D532911F5D443B006568B1 /* en-GB */,
 				F7D532A61F5D4462006568B1 /* zh-Hans */,
-				F74C5D951F923E4800B7CC01 /* fi-FI */,
 				F77438ED1FCD694900662C46 /* ka-GE */,
 				F77438F41FCD69D300662C46 /* hu */,
 				F77438FB1FCD6A0E00662C46 /* zh-Hant-TW */,
@@ -4181,6 +4228,9 @@
 				F774395D1FCD6D8200662C46 /* es-SV */,
 				F77439641FCD6D9D00662C46 /* es-UY */,
 				F7BB04871FD58ACB00BBFD2A /* cs-CZ */,
+				F7320936201B8130008A0888 /* ko */,
+				F732093D201B81E5008A0888 /* es-419 */,
+				F70A07CA205285FB00DC1231 /* pt-PT */,
 			);
 			name = Intro.strings;
 			path = "Supporting Files";
@@ -4206,7 +4256,6 @@
 				F7D532511F5D4155006568B1 /* sk-SK */,
 				F7D5328C1F5D443B006568B1 /* en-GB */,
 				F7D532A11F5D4461006568B1 /* zh-Hans */,
-				F74C5D901F923E4700B7CC01 /* fi-FI */,
 				F77438E81FCD694900662C46 /* ka-GE */,
 				F77438EF1FCD69D200662C46 /* hu */,
 				F77438F61FCD6A0D00662C46 /* zh-Hant-TW */,
@@ -4226,6 +4275,9 @@
 				F77439581FCD6D8100662C46 /* es-SV */,
 				F774395F1FCD6D9C00662C46 /* es-UY */,
 				F7BB04821FD58ACA00BBFD2A /* cs-CZ */,
+				F7320931201B812F008A0888 /* ko */,
+				F7320938201B81E4008A0888 /* es-419 */,
+				F70A07C5205285FA00DC1231 /* pt-PT */,
 			);
 			name = CTAssetsPicker.strings;
 			path = "Supporting Files";
@@ -4251,7 +4303,6 @@
 				F7D532571F5D4156006568B1 /* sk-SK */,
 				F7D532921F5D443B006568B1 /* en-GB */,
 				F7D532A71F5D4462006568B1 /* zh-Hans */,
-				F74C5D961F923E4800B7CC01 /* fi-FI */,
 				F77438EE1FCD694900662C46 /* ka-GE */,
 				F77438F51FCD69D300662C46 /* hu */,
 				F77438FC1FCD6A0E00662C46 /* zh-Hant-TW */,
@@ -4271,6 +4322,9 @@
 				F774395E1FCD6D8200662C46 /* es-SV */,
 				F77439651FCD6D9D00662C46 /* es-UY */,
 				F7BB04881FD58ACB00BBFD2A /* cs-CZ */,
+				F7320937201B8130008A0888 /* ko */,
+				F732093E201B81E5008A0888 /* es-419 */,
+				F70A07CB205285FB00DC1231 /* pt-PT */,
 			);
 			name = Error.strings;
 			path = "Supporting Files";
@@ -4296,7 +4350,6 @@
 				F7D532551F5D4155006568B1 /* sk-SK */,
 				F7D532901F5D443B006568B1 /* en-GB */,
 				F7D532A51F5D4461006568B1 /* zh-Hans */,
-				F74C5D941F923E4800B7CC01 /* fi-FI */,
 				F77438EC1FCD694900662C46 /* ka-GE */,
 				F77438F31FCD69D300662C46 /* hu */,
 				F77438FA1FCD6A0E00662C46 /* zh-Hant-TW */,
@@ -4316,6 +4369,9 @@
 				F774395C1FCD6D8200662C46 /* es-SV */,
 				F77439631FCD6D9C00662C46 /* es-UY */,
 				F7BB04861FD58ACB00BBFD2A /* cs-CZ */,
+				F7320935201B8130008A0888 /* ko */,
+				F732093C201B81E4008A0888 /* es-419 */,
+				F70A07C9205285FB00DC1231 /* pt-PT */,
 			);
 			name = InfoPlist.strings;
 			path = "Supporting Files";
@@ -4341,7 +4397,6 @@
 				F7D532541F5D4155006568B1 /* sk-SK */,
 				F7D5328F1F5D443B006568B1 /* en-GB */,
 				F7D532A41F5D4461006568B1 /* zh-Hans */,
-				F74C5D931F923E4700B7CC01 /* fi-FI */,
 				F77438EB1FCD694900662C46 /* ka-GE */,
 				F77438F21FCD69D300662C46 /* hu */,
 				F77438F91FCD6A0D00662C46 /* zh-Hant-TW */,
@@ -4361,6 +4416,9 @@
 				F774395B1FCD6D8200662C46 /* es-SV */,
 				F77439621FCD6D9C00662C46 /* es-UY */,
 				F7BB04851FD58ACB00BBFD2A /* cs-CZ */,
+				F7320934201B812F008A0888 /* ko */,
+				F732093B201B81E4008A0888 /* es-419 */,
+				F70A07C8205285FB00DC1231 /* pt-PT */,
 			);
 			name = Localizable.strings;
 			path = "Supporting Files";

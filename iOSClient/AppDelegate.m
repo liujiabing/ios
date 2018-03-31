@@ -106,11 +106,11 @@
     NSLog(@"[LOG] Start program group -----------------");
     NSLog(@"%@", dirGroup);    
     NSLog(@"[LOG] Start program application -----------");
-    NSLog(@"%@", [[CCUtility getDirectoryLocal] stringByDeletingLastPathComponent]);
+    NSLog(@"%@", [[CCUtility getDirectoryDocuments] stringByDeletingLastPathComponent]);
     NSLog(@"[LOG] -------------------------------------");
 
-    // create Directory local => Documents
-    dir = [CCUtility getDirectoryLocal];
+    // create Directory Documents
+    dir = [CCUtility getDirectoryDocuments];
     if (![[NSFileManager defaultManager] fileExistsAtPath: dir] && [dir length])
         [[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
     
@@ -119,7 +119,7 @@
     if (![[NSFileManager defaultManager] fileExistsAtPath: dir] && [dir length])
         [[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
 
-    // create dir Database Nextcloud
+    // create Directory database Nextcloud
     dir = [[dirGroup URLByAppendingPathComponent:appDatabaseNextcloud] path];
     if (![[NSFileManager defaultManager] fileExistsAtPath:dir])
     [[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
@@ -146,6 +146,14 @@
             [self settingActiveAccount:account.account activeUrl:account.url activeUser:account.user activeUserID:account.userID activePassword:account.password];
         }
     }
+    
+#ifdef DEBUG
+    NSLog(@"[LOG] Copy DB on Documents directory");
+    NSString *atPathDB = [NSString stringWithFormat:@"%@/nextcloud.realm", [[dirGroup URLByAppendingPathComponent:appDatabaseNextcloud] path]];
+    NSString *toPathDB = [NSString stringWithFormat:@"%@/nextcloud.realm", [CCUtility getDirectoryDocuments]];
+    [[NSFileManager defaultManager] removeItemAtPath:toPathDB error:nil];
+    [[NSFileManager defaultManager] copyItemAtPath:atPathDB toPath:toPathDB error:nil];
+#endif
     
     // Operation Queue OC Networking
     _netQueue = [[NSOperationQueue alloc] init];
@@ -208,17 +216,17 @@
             [self handleShortCutItem:shortcutItem];
     }
     
+    // Verify Lock
+    [self verifyLockOnLoadAutoUpload];
+    
     // Start Timer
-    self.timerProcessAutoDownloadUpload = [NSTimer scheduledTimerWithTimeInterval:2.0 target:self selector:@selector(processAutoDownloadUpload) userInfo:nil repeats:YES];
+    self.timerProcessAutoDownloadUpload = [NSTimer scheduledTimerWithTimeInterval:k_timerProcessAutoDownloadUpload target:self selector:@selector(processAutoDownloadUpload) userInfo:nil repeats:YES];
     self.timerUpdateApplicationIconBadgeNumber = [NSTimer scheduledTimerWithTimeInterval:k_timerUpdateApplicationIconBadgeNumber target:self selector:@selector(updateApplicationIconBadgeNumber) userInfo:nil repeats:YES];
 
     // Registration Push Notification
     UIUserNotificationType types = UIUserNotificationTypeSound | UIUserNotificationTypeBadge | UIUserNotificationTypeAlert;
     UIUserNotificationSettings *notificationSettings = [UIUserNotificationSettings settingsForTypes:types categories:nil];
     [application registerUserNotificationSettings:notificationSettings];
-    
-    // E2E Encryption
-    self.endToEndInterface = [NCEntoToEndInterface new];
     
     // Fabric
     [Fabric with:@[[Crashlytics class]]];
@@ -241,20 +249,35 @@
 // L' applicazione entrerà in primo piano (attivo solo dopo il background)
 //
 - (void)applicationWillEnterForeground:(UIApplication *)application
-{    
-    // refresh active Main
-    if (_activeMain) {
-        [_activeMain reloadDatasource];
-        [_activeMain readFileReloadFolder];
-    }
+{
+    // Test Maintenance
+    if (self.activeAccount.length == 0 || self.maintenanceMode)
+        return;
     
-    // refresh Photos tab
-    if (_activePhotos) {
-        [_activePhotos reloadDatasourceForced];
-    }
+    NSLog(@"[LOG] Request Service Server Nextcloud");
+    [[NCService sharedInstance] startRequestServicesServer];
     
-    // Initializations
-    [self applicationInitialized];
+    NSLog(@"[LOG] Initialize Auto upload");
+    [[NCAutoUpload sharedInstance] initStateAutoUpload];    
+}
+
+//
+// L' applicazione entrerà in primo piano (attivo sempre)
+//
+- (void)applicationDidBecomeActive:(UIApplication *)application
+{
+    // Test Maintenance
+    if (self.activeAccount.length == 0 || self.maintenanceMode)
+        return;
+    
+    // verify Upload
+    [self verifyUploadInErrorOrWait];
+    
+    // middelware ping
+    if ([[NCBrandOptions sharedInstance] use_middlewarePing]) {
+        NSLog(@"[LOG] Middleware Ping");
+        [[NCService sharedInstance] middlewarePing];
+    }
 }
 
 //
@@ -289,90 +312,71 @@
     NSLog(@"[LOG] bye bye, Nextcloud !");
 }
 
-//
-// Application Initialized
-//
-- (void)applicationInitialized
-{
-    // Test Maintenance
-    if (self.maintenanceMode)
-        return;
-
-    // Execute : now
-    NSLog(@"[LOG] Update Folder Photo");
-    NSString *autoUploadPath = [[NCManageDatabase sharedInstance] getAccountAutoUploadPath:_activeUrl];
-    if ([autoUploadPath length] > 0) {
-        
-        NSString *fileName = [[NCManageDatabase sharedInstance] getAccountAutoUploadFileName];
-        NSString *serverUrl = [[NCManageDatabase sharedInstance] getAccountAutoUploadDirectory:_activeUrl];
-        
-        [[CCSynchronize sharedSynchronize] readFileForFolder:fileName serverUrl:serverUrl selector:selectorReadFileFolder];        
-    }
-    
-    // Execute : after 1 sec.
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-    
-        // verify Download
-        [[CCNetworking sharedNetworking] verifyDownloadInProgress];
-        if (_activeMain)
-            [[CCNetworking sharedNetworking] verifyDownloadInError:self.activeMain];
-        
-        // verify Upload
-        [[CCNetworking sharedNetworking] verifyUploadInProgress];
-        [[CCNetworking sharedNetworking] verifyUploadInErrorOrWait];
-
-        if (_activeMain) {
-            NSLog(@"[LOG] Request Server Capabilities");
-            [_activeMain requestServerCapabilities];
-        }
-        
-        if (_activeMain && [[NCBrandOptions sharedInstance] use_middlewarePing]) {
-            NSLog(@"[LOG] Middleware Ping");
-            [_activeMain middlewarePing];
-        }
-        
-        NSLog(@"[LOG] Initialize Auto upload");
-        [[NCAutoUpload sharedInstance] initStateAutoUpload];
-        
-        NSLog(@"[LOG] Listning Favorites");
-        [_activeFavorites readListingFavorites];
-    });
-}
-
 #pragma --------------------------------------------------------------------------------------------
 #pragma mark ===== Login =====
 #pragma --------------------------------------------------------------------------------------------
 
 - (void)openLoginView:(id)delegate loginType:(enumLoginType)loginType
 {
+    BOOL loginWeb = NO;
+    
     @synchronized (self) {
 
-        if ([NCBrandOptions sharedInstance].use_login_web) {
-        
-            if (!_activeLoginWeb.view.window) {
-        
+        // only for personalized LoginWeb [customer]
+        if ([NCBrandOptions sharedInstance].use_login_web_personalized) {
+            
+            if (_activeLoginWeb == nil) {
+                
                 _activeLoginWeb = [CCLoginWeb new];
                 _activeLoginWeb.delegate = delegate;
                 _activeLoginWeb.loginType = loginType;
-        
+                _activeLoginWeb.urlBase = [[NCBrandOptions sharedInstance] loginBaseUrl];
+                
                 dispatch_async(dispatch_get_main_queue(), ^ {
                     [_activeLoginWeb presentModalWithDefaultTheme:delegate];
                 });
             }
+            return;
+        }
         
-        } else {
+        // ------------------- Nextcloud -------------------------
+        //
         
-            if (_activeLogin == nil) {
+        // Login flow : LoginWeb
+        if (loginType == loginModifyPasswordUser) {
+            tableAccount *account = [[NCManageDatabase sharedInstance] getAccountActive];
+            if (account.loginFlow)
+                loginWeb = YES;
+        }
+            
+        if (loginWeb) {
+            
+            if (_activeLoginWeb == nil) {
+                
+                _activeLoginWeb = [CCLoginWeb new];
+                _activeLoginWeb.delegate = delegate;
+                _activeLoginWeb.loginType = loginType;
+                _activeLoginWeb.urlBase = self.activeUrl;
 
+                dispatch_async(dispatch_get_main_queue(), ^ {
+                    [_activeLoginWeb presentModalWithDefaultTheme:delegate];
+                });
+            }
+            
+        } else {
+            
+            if (_activeLogin == nil) {
+                
                 _activeLogin = [[UIStoryboard storyboardWithName:@"CCLogin" bundle:nil] instantiateViewControllerWithIdentifier:@"CCLoginNextcloud"];
                 _activeLogin.delegate = delegate;
                 _activeLogin.loginType = loginType;
-        
+                
                 dispatch_async(dispatch_get_main_queue(), ^ {
                     [delegate presentViewController:_activeLogin animated:YES completion:nil];
                 });
             }
         }
+        
     }
 }
 
@@ -712,22 +716,28 @@
         
         if (visible) {
             
-            if (errorcode == kCFURLErrorNotConnectedToInternet || errorcode == k_CCErrorNetworkNowAvailable) {
-                
-                if (errorCodePrev != errorcode)
-                    [JDStatusBarNotification showWithStatus:NSLocalizedString(title, nil) dismissAfter:delay styleName:JDStatusBarStyleDefault];
-                
-                errorCodePrev = errorcode;
-                
-            } else {
-                
-                if (description.length > 0) {
-                
-                    [TWMessageBarManager sharedInstance].styleSheet = self;
-                    [[TWMessageBarManager sharedInstance] showMessageWithTitle:[NSString stringWithFormat:@"%@\n", NSLocalizedString(title, nil)] description:NSLocalizedString(description, nil) type:type duration:delay];
-                }
+            switch (errorcode) {
+                    
+                // JDStatusBarNotification
+                case kCFURLErrorNotConnectedToInternet :
+                    
+                    if (errorCodePrev != errorcode)
+                        [JDStatusBarNotification showWithStatus:NSLocalizedString(title, nil) dismissAfter:delay styleName:JDStatusBarStyleDefault];
+                    
+                    errorCodePrev = errorcode;
+                    break;
+                    
+                // TWMessageBarManager
+                default:
+                    
+                    if (description.length > 0) {
+                        
+                        [TWMessageBarManager sharedInstance].styleSheet = self;
+                        [[TWMessageBarManager sharedInstance] showMessageWithTitle:[NSString stringWithFormat:@"%@\n", NSLocalizedString(title, nil)] description:NSLocalizedString(description, nil) type:type duration:delay];
+                    }
+                    break;
             }
-            
+                        
         } else {
             
             [[TWMessageBarManager sharedInstance] hideAllAnimated:YES];
@@ -801,11 +811,10 @@
     if (self.maintenanceMode)
         return;
     
-    NSInteger queueDownload = [[[NCManageDatabase sharedInstance] getTableMetadataDownload] count] + [[[NCManageDatabase sharedInstance] getTableMetadataDownloadWWan] count];
-    NSInteger queueUpload = [[[NCManageDatabase sharedInstance] getTableMetadataUpload] count] + [[[NCManageDatabase sharedInstance] getTableMetadataUploadWWan] count];
+    NSInteger total = 0;
     
     // Total
-    NSInteger total = queueDownload + queueUpload + [[NCManageDatabase sharedInstance] countQueueDownloadWithSession:nil] + [[NCManageDatabase sharedInstance] countQueueUploadWithSession:nil];
+    total = [[CCNetworking sharedNetworking] getNumDownloadInProgressWWan:NO] + [[CCNetworking sharedNetworking] getNumDownloadInProgressWWan:YES] + [[CCNetworking sharedNetworking] getNumUploadInProgressWWan:NO] + [[CCNetworking sharedNetworking] getNumUploadInProgressWWan:YES];
     
     [UIApplication sharedApplication].applicationIconBadgeNumber = total;
     
@@ -1180,10 +1189,8 @@
         
         if (self.lastReachability == NO) {
             
-            [self messageNotification:@"_network_available_" description:nil visible:YES delay:k_dismissAfterSecond type:TWMessageBarMessageTypeInfo errorCode:k_CCErrorNetworkNowAvailable];
-            
-            if (_activeMain)
-                [_activeMain performSelector:@selector(requestServerCapabilities) withObject:nil afterDelay:3];
+            NSLog(@"[LOG] Request Service Server Nextcloud");
+            [[NCService sharedInstance] startRequestServicesServer];
         }
         
         NSLog(@"[LOG] Reachability Changed: Reachable");
@@ -1214,6 +1221,9 @@
 - (void)application:(UIApplication *)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
 {
     NSLog(@"[LOG] Start perform Fetch With Completion Handler");
+    
+    // verify Upload
+    [self verifyUploadInErrorOrWait];
     
     // Verify new photo
     [[NCAutoUpload sharedInstance] initStateAutoUpload];
@@ -1331,9 +1341,9 @@
     }
     else if ([[_listChangeTask objectForKey:fileID] isEqualToString:@"reloadDownload"]) {
         
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-            [[CCNetworking sharedNetworking] downloadFile:metadata.fileName fileID:fileID serverUrl:serverUrl selector:metadata.sessionSelector selectorPost:metadata.sessionSelectorPost session:k_download_session taskStatus:k_taskStatusResume delegate:self.activeMain];
-        });
+        [[NCManageDatabase sharedInstance] setMetadataSession:@"" sessionError:@"" sessionSelector:@"" sessionSelectorPost:@"" sessionTaskIdentifier:k_taskIdentifierDone predicate:[NSPredicate predicateWithFormat:@"fileID = %@", fileID]];
+        
+        [[CCNetworking sharedNetworking] downloadFile:metadata.fileName fileID:fileID serverUrl:serverUrl selector:metadata.sessionSelector selectorPost:metadata.sessionSelectorPost session:k_download_session taskStatus:k_taskStatusResume delegate:self.activeMain];
     }
     else if ([[_listChangeTask objectForKey:metadata.fileID] isEqualToString:@"cancelUpload"]) {
         
@@ -1377,16 +1387,16 @@
         return;
     
     // BACKGROND & FOREGROUND
-    NSLog(@"[LOG] -PROCESS-AUTO-UPLOAD-");
-    
     if ([[UIApplication sharedApplication] applicationState] == UIApplicationStateBackground) {
         
         // ONLY BACKGROUND
+        NSLog(@"[LOG] -PROCESS-AUTO-UPLOAD-");
         [self performSelectorOnMainThread:@selector(loadAutoDownloadUpload:) withObject:[NSNumber numberWithInt:k_maxConcurrentOperationDownloadUploadBackground] waitUntilDone:NO];
         
     } else {
         
         // ONLY FOREFROUND
+        NSLog(@"[LOG] -PROCESS-AUTO-UPLOAD-");
         [self performSelectorOnMainThread:@selector(loadAutoDownloadUpload:) withObject:[NSNumber numberWithInt:k_maxConcurrentOperationDownloadUpload] waitUntilDone:NO];
     }
 }
@@ -1394,6 +1404,16 @@
 - (void)loadAutoDownloadUpload:(NSNumber *)maxConcurrent
 {
     CCMetadataNet *metadataNet;
+    
+    // E2EE : not in background
+    if ([[UIApplication sharedApplication] applicationState] == UIApplicationStateBackground) {
+        metadataNet = [[NCManageDatabase sharedInstance] getQueueUploadLock];
+        if (metadataNet) {
+            tableDirectory *directory = [[NCManageDatabase sharedInstance] getTableDirectoryWithPredicate:[NSPredicate predicateWithFormat:@"account = %@ AND serverUrl = %@ AND e2eEncrypted = 1", self.activeAccount, metadataNet.serverUrl]];
+            if (directory != nil)
+                return;
+        }
+    }
     
     // Stop Timer
     [_timerProcessAutoDownloadUpload invalidate];
@@ -1438,15 +1458,17 @@
     
     // ------------------------- <selector Auto Upload All> ----------------------
     
-    // Verify num error MAX 10 after STOP
+    // Verify num error k_maxErrorAutoUploadAll after STOP (100)
     NSArray *metadatas = [[NCManageDatabase sharedInstance] getMetadatasWithPredicate:[NSPredicate predicateWithFormat:@"account = %@ AND sessionSelector = %@ AND sessionTaskIdentifier = %i", _activeAccount, selectorUploadAutoUploadAll, k_taskIdentifierError] sorted:nil ascending:NO];
     
     NSInteger errorCount = [metadatas count];
     
-    if (errorCount >= 10) {
+    if (errorCount >= k_maxErrorAutoUploadAll) {
         
-        [self messageNotification:@"_error_" description:@"_too_errors_automatic_all_" visible:YES delay:k_dismissAfterSecond type:TWMessageBarMessageTypeError errorCode:0];
+        [self messageNotification:@"_error_" description:@"_too_errors_automatic_all_" visible:YES delay:k_dismissAfterSecond type:TWMessageBarMessageTypeError errorCode:k_CCErrorInternalError];
         
+        [[NCManageDatabase sharedInstance] addActivityClient:@"" fileID:@"" action:k_activityDebugActionAutoUpload selector:selectorUploadAutoUploadAll note:@"_too_errors_automatic_all_" type:k_activityTypeFailure verbose:k_activityVerboseDefault activeUrl:_activeUrl];
+
     } else {
         
         if (counterUploadInSessionAndInLock < maxConcurrentDownloadUpload && counterUploadInLock < 1) {
@@ -1478,27 +1500,54 @@
         counterUploadInSessionAndInLock = [[[NCManageDatabase sharedInstance] getTableMetadataUpload] count] + [[[NCManageDatabase sharedInstance] getTableMetadataUploadWWan] count] + [[[NCManageDatabase sharedInstance] getLockQueueUpload] count];
     }
     
-    // Verify Lock
-    NSInteger counterUploadInSession = [[[NCManageDatabase sharedInstance] getTableMetadataUpload] count] + [[[NCManageDatabase sharedInstance] getTableMetadataUploadWWan] count];
-    NSArray *tableMetadatasInLock = [[NCManageDatabase sharedInstance] getLockQueueUpload];
-    
-    if (counterNewUpload == 0 && counterUploadInSession == 0 && [tableMetadatasInLock count] > 0) {
-        
-        // Unlock
-        for (tableMetadata *metadata in tableMetadatasInLock) {
-            
-            if ([[NCManageDatabase sharedInstance] isTableInvalidated:metadata] == NO)
-                [[NCManageDatabase sharedInstance] unlockQueueUploadWithAssetLocalIdentifier:metadata.assetLocalIdentifier];
-        }
-    }
-    
-    // In background verify Upload in error
-    if ([[UIApplication sharedApplication] applicationState] == UIApplicationStateBackground) {
-        [[CCNetworking sharedNetworking] verifyUploadInErrorOrWait];
-    }
-    
     // Start Timer
     _timerProcessAutoDownloadUpload = [NSTimer scheduledTimerWithTimeInterval:k_timerProcessAutoDownloadUpload target:self selector:@selector(processAutoDownloadUpload) userInfo:nil repeats:YES];
+}
+
+#pragma --------------------------------------------------------------------------------------------
+#pragma mark ===== Process Verify =====
+#pragma --------------------------------------------------------------------------------------------
+
+- (void)verifyLockOnLoadAutoUpload
+{
+    // Test Maintenance
+    if (self.maintenanceMode || self.activeAccount.length == 0)
+        return;
+    
+    NSInteger counterUploadInSession = [[[NCManageDatabase sharedInstance] getTableMetadataUpload] count] + [[[NCManageDatabase sharedInstance] getTableMetadataUploadWWan] count];
+    NSArray *tableMetadatasInLock = [[NCManageDatabase sharedInstance] getLockQueueUpload];
+     
+     if (counterUploadInSession == 0 && [tableMetadatasInLock count] > 0) {
+     
+         // Unlock
+         for (tableMetadata *metadata in tableMetadatasInLock) {
+     
+             if ([[NCManageDatabase sharedInstance] isTableInvalidated:metadata] == NO)
+                 [[NCManageDatabase sharedInstance] unlockQueueUploadWithAssetLocalIdentifier:metadata.assetLocalIdentifier];
+         }
+     }
+}
+
+- (void)verifyUploadInErrorOrWait
+{
+    // Test Maintenance
+    if (self.maintenanceMode || self.activeAccount.length == 0)
+        return;
+    
+    NSMutableSet *directoryIDs = [NSMutableSet new];
+    
+    NSArray *metadatas = [[NCManageDatabase sharedInstance] getMetadatasWithPredicate:[NSPredicate predicateWithFormat:@"account = %@ AND session CONTAINS 'upload' AND (sessionTaskIdentifier = %i OR sessionTaskIdentifier = %i)", _activeAccount, k_taskIdentifierError, k_taskIdentifierWaitStart] sorted:nil ascending:NO];
+    
+    NSLog(@"[LOG] Verify re upload in error n. %lu", (unsigned long)[metadatas count]);
+    
+    for (tableMetadata *metadata in metadatas) {
+        
+        [[CCNetworking sharedNetworking] uploadFileMetadata:metadata taskStatus: k_taskStatusResume];
+        
+        [directoryIDs addObject:metadata.directoryID];
+        
+        NSLog(@"[LOG] Re upload file : %@", metadata.fileName);
+    }
 }
 
 #pragma --------------------------------------------------------------------------------------------
@@ -1591,9 +1640,7 @@
             //[[NCManageDatabase sharedInstance] clearTable:[tablePhotoLibrary class] account:nil];
         }
     }
-    
-    // VERSION < 2.19.1
-    
+        
     if (([actualVersion compare:@"2.19.1" options:NSNumericSearch] == NSOrderedAscending)) {
 
         [[NCManageDatabase sharedInstance] clearTable:[tableMetadata class] account:nil];
