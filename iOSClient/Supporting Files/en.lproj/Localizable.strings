@@ -201,7 +201,7 @@
 // Manage Help
 
 "_help_tutorial_"               = "Tutorial";
-"_help_intro_"                  = "Introduction to Nextcloud";
+"_help_intro_"                  = "Introduction to Asycloud";
 "_help_activity_verbose_"       = "Detailed Activity feed";
 "_help_activity_mail_"          = "Send activity via email";
 "_help_activity_clear_"         = "Clear activity";
@@ -211,7 +211,7 @@
 
 "_optimized_photos_"            = "Optimized photo resolution";
 "_upload_del_photos_"           = "Remove files after upload";
-"_optimized_photos_how_"        = "If your device is low on space, full-resolution photos are automatically replaced with optimized versions. The full-resolution versions are stored in your Nextcloud.";
+"_optimized_photos_how_"        = "If your device is low on space, full-resolution photos are automatically replaced with optimized versions. The full-resolution versions are stored in your Asycloud.";
 "_upload_del_photos_how_"       = "Files will be removed from device memory after they’ve been uploaded to your cloud. They will remain in the camera roll. Just download the files to see them.";
 "_show_hidden_files_"           = "Show hidden files";
 "_format_compatibility_"        = "Most Compatible";
@@ -222,9 +222,9 @@
 "_connect_server_anyway_"       = "Do you want to connect to the server anyway?";
 "_connection_error_"            = "Connection error";
 "_serverstatus_error_"          = "Connection to server failure, verify your server address or network status";
-"_add_your_nextcloud_"          = "Add your Nextcloud account";
+"_add_your_nextcloud_"          = "Add your Asycloud account";
 "_login_url_"                   = "Server address https://…";
-"_login_bottom_label_"          = "注册账号";
+"_login_bottom_label_"          = "Register";
 "_error_multidomain_"           = "Address not allowed, only the following domains are valid:";
 "_account_already_exists_"      = "The account %@ already exists";
 "_traditional_login_"           = "Revert to old login method";
