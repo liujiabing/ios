@@ -29,7 +29,7 @@
 "_file_upload_not_exitst_"              = "The file that you want to upload does not exist";
 "_forbidden_characters_from_server_"    = "The name contains at least one invalid character";
 "_not_connected_internet_"              = "Server connection error";
-"_not_possible_connect_to_server_"      = "It is not possible to connect to the server at this time";
+"_not_possible_connect_to_server_"      = "Wrong username or password, or totp error";
 "_not_possible_create_folder_"          = "Folder could not be created";
 "_server_down_"                         = "Could not establish contact with server";
 "_time_out_"                            = "Timeout, try again";

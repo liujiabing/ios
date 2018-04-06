@@ -1490,6 +1490,9 @@
 - (NSURLSessionTask *) getRemoteThumbnailByServer:(NSString*)serverPath ofFilePath:(NSString *)filePath withWidth:(NSInteger)fileWidth andHeight:(NSInteger)fileHeight onCommunication:(OCCommunication *)sharedOCComunication
                      successRequest:(void(^)(NSHTTPURLResponse *response, NSData *thumbnail, NSString *redirectedServer)) successRequest
                      failureRequest:(void(^)(NSHTTPURLResponse *response, NSError *error, NSString *redirectedServer)) failureRequest {
+    if([filePath hasPrefix:@"cloud/"]) {
+        filePath = [filePath substringFromIndex:6];
+    }
     
     serverPath = [serverPath encodeString:NSUTF8StringEncoding];
     serverPath = [serverPath stringByAppendingString:k_url_thumbnails];

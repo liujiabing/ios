@@ -415,7 +415,7 @@
             if ([error code] != NSURLErrorServerCertificateUntrusted) {
             
                 NSString *description = [error.userInfo objectForKey:@"NSLocalizedDescription"];
-                NSString *message = [NSString stringWithFormat:@"%@.\n%@", NSLocalizedStringFromTable(@"_not_possible_connect_to_server_", @"Error", nil), description];
+                NSString *message = [NSString stringWithFormat:@"%@.\n%s", NSLocalizedStringFromTable(@"_not_possible_connect_to_server_", @"Error", nil), ""];
             
                 UIAlertController *alertController = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"_error_", nil) message:message preferredStyle:UIAlertControllerStyleAlert];
                 UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"_ok_", nil) style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {}];
