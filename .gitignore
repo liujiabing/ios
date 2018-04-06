@@ -10,8 +10,8 @@
 ## Nextcloud
 .DS_Store
 .github
-.xcodeproj
-Nextcloud.xcodeproj
+*.xcodeproj
+!Nextcloud.xcodeproj
 README.md
 Documentation/
 Custom/
